@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { ShoppingCart, Heart, Shield, Truck, RotateCcw } from 'lucide-react';
+import { ShoppingCart, Heart, Shield, Truck, RotateCcw, Star } from 'lucide-react';
 import { ProductImages } from '@/components/product/ProductImages';
 import { ProductVariants } from '@/components/product/ProductVariants';
 import { ReviewSection } from '@/components/product/ReviewSection';
