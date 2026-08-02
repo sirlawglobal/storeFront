@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+/*
+ * @theme inline: adds custom tokens ON TOP of Tailwind defaults
+ * without "inline", @theme would REPLACE all built-in colors/fonts
+ * which would break bg-white, bg-gray-100, text-white, etc.
+ */
+@theme inline {
+  /* Brand Colors */
+  --color-primary: #1a5c38;
+  --color-primary-light: #2d8f5c;
+  --color-accent: #f5a623;
+  --color-background: #fafaf8;
+  --color-surface: #ffffff;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #555555;
+  --color-border: #e5e5e5;
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+
+  /* Fonts — Tailwind v4 uses --font-* for font-family utilities */
+  --font-inter: 'Inter', sans-serif;
+  --font-playfair: 'Playfair Display', serif;
+}
+
+/* ─── Base Styles ─── */
+body {
+  font-family: var(--font-inter);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair);
+  color: var(--color-primary);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* ─── Container ─── */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* ─── Form Inputs ─── */
+.input-base {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background-color: var(--color-surface);
+}
+
+.input-base:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(26, 92, 56, 0.1);
+}
+
+.input-base:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+/* ─── Animations ─── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease forwards;
+}
