@@ -237,4 +237,12 @@ export const api = {
     validate: (code: string, cartTotal: number, productIds?: string[]) =>
       apiClient.post('/promotions/validate', { code, cartTotal, productIds }),
   },
+
+  // ── Sleep Quiz ─────────────────────────────────────────────────────────────
+  sleepQuiz: {
+    getQuestions: () => apiClient.get('/sleep-quiz/questions'),
+    submit: (answers: Record<string, any>) => apiClient.post('/sleep-quiz/submit', answers),
+    getResult: (id: string) => apiClient.get(`/sleep-quiz/result/${id}`),
+    getMyLatest: () => apiClient.get('/sleep-quiz/my-latest'),
+  },
 };
