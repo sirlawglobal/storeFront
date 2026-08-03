@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { Search, ShoppingCart, User, Menu, Heart, ChevronDown, Grid } from 'lucide-react';
 import { useCartStore } from '@/store/cart.store';
@@ -23,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   const { isLoggedIn, user } = useAuthStore();
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -38,6 +39,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
     };
     fetchCategories();
   }, []);
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsCategoryDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsCategoryDropdownOpen(false);
+    }, 150); // Gentle 150ms buffer so moving cursor into dropdown menu is 100% smooth
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-border shadow-xs">
@@ -66,11 +78,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
             All Products
           </Link>
 
-          {/* Categories Dropdown */}
+          {/* Categories Dropdown Container */}
           <div
-            className="relative group"
-            onMouseEnter={() => setIsCategoryDropdownOpen(true)}
-            onMouseLeave={() => setIsCategoryDropdownOpen(false)}
+            className="relative"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
             <button
               onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
@@ -85,58 +97,60 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
               />
             </button>
 
-            {/* Dropdown Menu */}
+            {/* Seamless Dropdown Menu Wrapper (pt-2 acts as invisible hover bridge) */}
             <div
-              className={`absolute top-full left-0 mt-1 w-64 bg-white border border-border rounded-2xl shadow-xl p-3 transition-all duration-200 z-50 ${
+              className={`absolute top-full left-0 pt-2 w-64 transition-all duration-200 z-50 ${
                 isCategoryDropdownOpen
                   ? 'opacity-100 visible translate-y-0'
                   : 'opacity-0 invisible -translate-y-2 pointer-events-none'
               }`}
             >
-              <div className="px-3 py-2 border-b border-border/60 mb-2 flex items-center gap-2">
-                <Grid size={15} className="text-primary" />
-                <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">
-                  Shop By Category
-                </span>
-              </div>
-
-              {categories.length > 0 ? (
-                <div className="max-h-80 overflow-y-auto custom-scrollbar space-y-1">
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat._id}
-                      href={`/products?category=${cat.slug}`}
-                      onClick={() => setIsCategoryDropdownOpen(false)}
-                      className="flex items-center justify-between px-3 py-2 text-sm font-medium text-text-primary hover:text-primary hover:bg-primary/5 rounded-xl transition-colors capitalize group/item"
-                    >
-                      <span>{cat.name}</span>
-                      <span className="text-xs text-gray-400 group-hover/item:text-primary transition-colors">
-                        →
-                      </span>
-                    </Link>
-                  ))}
+              <div className="bg-white border border-border rounded-2xl shadow-xl p-3">
+                <div className="px-3 py-2 border-b border-border/60 mb-2 flex items-center gap-2">
+                  <Grid size={15} className="text-primary" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                    Shop By Category
+                  </span>
                 </div>
-              ) : (
-                <div className="p-3 text-center text-xs text-text-secondary">
-                  <p className="mb-2">No custom categories found</p>
+
+                {categories.length > 0 ? (
+                  <div className="max-h-80 overflow-y-auto custom-scrollbar space-y-1">
+                    {categories.map((cat) => (
+                      <Link
+                        key={cat._id}
+                        href={`/products?category=${cat.slug}`}
+                        onClick={() => setIsCategoryDropdownOpen(false)}
+                        className="flex items-center justify-between px-3 py-2 text-sm font-medium text-text-primary hover:text-primary hover:bg-primary/5 rounded-xl transition-colors capitalize group/item"
+                      >
+                        <span>{cat.name}</span>
+                        <span className="text-xs text-gray-400 group-hover/item:text-primary transition-colors">
+                          →
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 text-center text-xs text-text-secondary">
+                    <p className="mb-2">No custom categories found</p>
+                    <Link
+                      href="/products"
+                      onClick={() => setIsCategoryDropdownOpen(false)}
+                      className="text-primary font-semibold hover:underline"
+                    >
+                      Browse All Products
+                    </Link>
+                  </div>
+                )}
+
+                <div className="mt-2 pt-2 border-t border-border/60 text-center">
                   <Link
                     href="/products"
                     onClick={() => setIsCategoryDropdownOpen(false)}
-                    className="text-primary font-semibold hover:underline"
+                    className="text-xs font-semibold text-primary hover:underline block py-1"
                   >
-                    Browse All Products
+                    View All Categories →
                   </Link>
                 </div>
-              )}
-
-              <div className="mt-2 pt-2 border-t border-border/60 text-center">
-                <Link
-                  href="/products"
-                  onClick={() => setIsCategoryDropdownOpen(false)}
-                  className="text-xs font-semibold text-primary hover:underline block py-1"
-                >
-                  View All Categories →
-                </Link>
               </div>
             </div>
           </div>
