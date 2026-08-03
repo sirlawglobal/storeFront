@@ -46,7 +46,8 @@ export const HeroBanner = () => {
       setIsLoading(true);
       try {
         const res: any = await api.banners.getActive();
-        const list = Array.isArray(res) ? res : (res?.data ?? []);
+        const payload = res?.data ?? res;
+        const list = Array.isArray(payload) ? payload : (payload?.data ?? []);
         if (Array.isArray(list) && list.length > 0) {
           const dynamicBanners: BannerItem[] = list.map((b: any, idx: number) => ({
             id: b._id || String(idx),
