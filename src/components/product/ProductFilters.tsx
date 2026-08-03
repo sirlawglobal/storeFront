@@ -31,7 +31,7 @@ export const ProductFilters = () => {
     const fetchCategories = async () => {
       try {
         const res: any = await api.categories.list();
-        const list = res?.data ?? res;
+        const list = res?.data?.items ?? res?.data ?? res;
         if (Array.isArray(list) && list.length > 0) {
           setCategories(list);
         } else {

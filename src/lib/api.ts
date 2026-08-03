@@ -122,7 +122,9 @@ export const api = {
   },
 
   categories: {
-    list: () => apiClient.get('/categories/tree'),
+    list: () => apiClient.get('/categories/flat'),
+    getTree: () => apiClient.get('/categories'),
+    getBySlug: (slug: string) => apiClient.get(`/categories/${slug}`),
   },
 
   // ── Cart ──────────────────────────────────────────────────────────────────
