@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { X, ShoppingBag } from 'lucide-react';
+import { X, ShoppingBag, Tag } from 'lucide-react';
 import { useCartStore } from '@/store/cart.store';
 import { Button } from '../ui/Button';
 import { CartItem } from './CartItem';
@@ -13,6 +13,9 @@ import { Cart } from '@/types';
 export const CartDrawer = () => {
   const { isOpen, closeCart, cart, setCart, itemCount } = useCartStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
   const router = useRouter();
 
   // Load fresh cart data whenever drawer opens
@@ -58,6 +61,37 @@ export const CartDrawer = () => {
     }
   };
 
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res: any = await api.cart.applyCoupon(couponInput.trim().toUpperCase());
+      const cartData = res?.data ?? res;
+      if (cartData && Array.isArray(cartData.items)) setCart(cartData as Cart);
+      setCouponInput('');
+    } catch (err: any) {
+      setCouponError(err.message || 'Invalid coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const res: any = await api.cart.removeCoupon();
+      const cartData = res?.data ?? res;
+      if (cartData && Array.isArray(cartData.items)) setCart(cartData as Cart);
+    } catch (err: any) {
+      setCouponError(err.message || 'Failed to remove coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
   const handleCheckout = () => {
     closeCart();
     router.push('/checkout');
@@ -100,7 +134,7 @@ export const CartDrawer = () => {
             <div className="flex flex-col items-center justify-center h-full text-center py-10">
               <ShoppingBag size={48} className="text-gray-200 mb-4" />
               <p className="text-lg font-medium text-text-primary mb-2">Your cart is empty</p>
-              <p className="text-sm text-text-secondary mb-6">Looks like you haven't added any products yet.</p>
+              <p className="text-sm text-text-secondary mb-6">Looks like you haven&apos;t added any products yet.</p>
               <Button onClick={closeCart}>Continue Shopping</Button>
             </div>
           ) : (
@@ -120,6 +154,40 @@ export const CartDrawer = () => {
         {/* Footer / Summary */}
         {cart && cart.items.length > 0 && (
           <div className="p-4 border-t border-border bg-gray-50">
+            {/* Promo Coupon Form */}
+            <div className="mb-3 pb-3 border-b border-border">
+              {cart.couponCode ? (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <Tag size={14} className="text-success" />
+                    <span className="font-bold text-green-800 uppercase">{cart.couponCode}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    disabled={couponLoading}
+                    className="text-error font-medium hover:underline cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleApplyCoupon} className="flex gap-1.5">
+                  <input
+                    type="text"
+                    placeholder="Coupon code"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    className="input-base text-xs uppercase py-1.5 px-2 flex-1"
+                  />
+                  <Button type="submit" size="sm" className="px-3 py-1.5 text-xs" isLoading={couponLoading}>
+                    Apply
+                  </Button>
+                </form>
+              )}
+              {couponError && <p className="text-[11px] text-error mt-1">{couponError}</p>}
+            </div>
+
             <div className="flex justify-between items-center mb-2">
               <span className="text-text-secondary">Subtotal</span>
               <span className="font-medium">{formatPrice(cart.subtotal)}</span>

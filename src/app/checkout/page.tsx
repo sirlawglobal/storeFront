@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ShieldCheck, MapPin, CreditCard, Lock, Plus } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, MapPin, CreditCard, Lock, Plus, Tag } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useCartStore } from '@/store/cart.store';
 import { Button } from '@/components/ui/Button';
@@ -15,7 +15,7 @@ type PaymentMethod = 'paystack' | 'flutterwave' | 'moniepoint' | 'opay';
 export default function CheckoutPage() {
   const router = useRouter();
   const { isLoggedIn, user } = useAuthStore();
-  const { cart, clearCart } = useCartStore();
+  const { cart, setCart, clearCart } = useCartStore();
 
   const [step, setStep] = useState(1);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -25,6 +25,47 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
   const [error, setError] = useState('');
+
+  // Coupon State
+  const [couponInput, setCouponInput] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [couponSuccess, setCouponSuccess] = useState('');
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError('');
+    setCouponSuccess('');
+    try {
+      const res: any = await api.cart.applyCoupon(couponInput.trim().toUpperCase());
+      const updatedCart = res?.data ?? res;
+      if (updatedCart) setCart(updatedCart);
+      setCouponSuccess(`Coupon '${couponInput.trim().toUpperCase()}' applied!`);
+      setCouponInput('');
+    } catch (err: any) {
+      setCouponError(err.message || 'Invalid or expired coupon code');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setCouponLoading(true);
+    setCouponError('');
+    setCouponSuccess('');
+    try {
+      const res: any = await api.cart.removeCoupon();
+      const updatedCart = res?.data ?? res;
+      if (updatedCart) setCart(updatedCart);
+      setCouponSuccess('Coupon removed');
+    } catch (err: any) {
+      setCouponError(err.message || 'Failed to remove coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   // Auth guard
   useEffect(() => {
@@ -272,6 +313,44 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Promo Coupon Form */}
+              <div className="mb-6 pt-4 border-t border-border">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
+                  Promo / Coupon Code
+                </label>
+                {cart.couponCode ? (
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 p-2.5 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <Tag size={16} className="text-success" />
+                      <span className="font-bold text-sm text-green-800 uppercase">{cart.couponCode}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      disabled={couponLoading}
+                      className="text-xs text-error font-medium hover:underline cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. WELCOME10"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      className="input-base text-sm uppercase py-2 flex-1"
+                    />
+                    <Button type="submit" size="sm" isLoading={couponLoading}>
+                      Apply
+                    </Button>
+                  </form>
+                )}
+                {couponError && <p className="text-xs text-error mt-1.5">{couponError}</p>}
+                {couponSuccess && <p className="text-xs text-success mt-1.5">{couponSuccess}</p>}
               </div>
 
               <div className="space-y-3 mb-6 pt-4 border-t border-border text-sm">
