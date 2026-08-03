@@ -232,6 +232,9 @@ export const api = {
   },
 
   // ── Promotions & Banners ──────────────────────────────────────────────────
+  banners: {
+    getActive: () => apiClient.get('/admin/banners/active'),
+  },
   promotions: {
     getActive: () => apiClient.get('/promotions/active'),
     validate: (code: string, cartTotal: number, productIds?: string[]) =>

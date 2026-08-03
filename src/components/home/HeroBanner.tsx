@@ -45,16 +45,16 @@ export const HeroBanner = () => {
     const fetchBanners = async () => {
       setIsLoading(true);
       try {
-        const res: any = await api.promotions.getActive();
-        const list = res?.data ?? res;
+        const res: any = await api.banners.getActive();
+        const list = Array.isArray(res) ? res : (res?.data ?? []);
         if (Array.isArray(list) && list.length > 0) {
-          const dynamicBanners: BannerItem[] = list.map((promo: any, idx: number) => ({
-            id: promo._id || String(idx),
-            title: promo.title || promo.name || `Special Deal: ${promo.code}`,
-            subtitle: promo.description || `Use coupon code ${promo.code} for ${promo.discountValue}% off!`,
-            image: promo.bannerImage || promo.imageUrl || FALLBACK_BANNERS[idx % 2].image,
-            ctaText: 'Shop Promotion',
-            ctaLink: '/products',
+          const dynamicBanners: BannerItem[] = list.map((b: any, idx: number) => ({
+            id: b._id || String(idx),
+            title: b.title || 'Experience Ultimate Comfort',
+            subtitle: b.subtitle || 'Discover premium sleep products tailored for your home.',
+            image: b.imageUrl || FALLBACK_BANNERS[idx % 2].image,
+            ctaText: b.buttonText || 'Shop Now',
+            ctaLink: b.targetUrl || '/products',
             position: idx % 2 === 0 ? 'center' : 'left',
           }));
           setBanners(dynamicBanners);
