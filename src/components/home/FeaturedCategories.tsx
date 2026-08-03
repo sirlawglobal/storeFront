@@ -67,7 +67,7 @@ export const FeaturedCategories = () => {
           </div>
         ) : (
           <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 pb-4 snap-x snap-mandatory hide-scrollbar">
-            {categories.map((cat) => {
+            {categories.slice(0, 8).map((cat) => {
               const bgImg =
                 cat.imageUrl ||
                 cat.image ||

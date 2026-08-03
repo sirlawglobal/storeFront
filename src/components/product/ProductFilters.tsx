@@ -64,6 +64,9 @@ export const ProductFilters = () => {
     setIsMobileOpen(false);
   };
 
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const displayedCategories = showAllCategories ? categories : categories.slice(0, 6);
+
   const FilterContent = () => (
     <div className="space-y-6">
       <div>
@@ -71,7 +74,7 @@ export const ProductFilters = () => {
           Categories <ChevronDown size={16} />
         </h3>
         <ul className="space-y-2">
-          {categories.map((cat) => (
+          {displayedCategories.map((cat) => (
             <li key={cat._id}>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -86,6 +89,15 @@ export const ProductFilters = () => {
             </li>
           ))}
         </ul>
+
+        {categories.length > 6 && (
+          <button
+            onClick={() => setShowAllCategories(!showAllCategories)}
+            className="mt-2 text-xs font-semibold text-primary hover:underline"
+          >
+            {showAllCategories ? 'Show Less' : `+ Show More (${categories.length - 6})`}
+          </button>
+        )}
       </div>
 
       <div>
