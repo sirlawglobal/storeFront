@@ -20,7 +20,7 @@ export const ProductVariants: React.FC<ProductVariantsProps> = ({ variants, sele
       <div className="flex flex-wrap gap-3">
         {variants.map((variant) => {
           const isSelected = selectedVariantId === variant._id;
-          const isOutOfStock = variant.stockQuantity <= 0;
+          const isOutOfStock = variant.stockQuantity !== undefined && variant.stockQuantity <= 0;
           
           return (
             <button

@@ -27,8 +27,8 @@ function ProductsPageContent() {
           params.maxPrice = max;
         }
 
-        const response = await api.products.list(params);
-        const list = response?.data ?? response;
+        const response: any = await api.products.list(params);
+        const list = response?.data?.items ?? response?.items ?? response?.data ?? response;
         setProducts(Array.isArray(list) ? list : []);
       } catch (error) {
         console.error('Failed to fetch products:', error);

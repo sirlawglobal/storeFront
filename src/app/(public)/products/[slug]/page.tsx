@@ -35,8 +35,8 @@ export default function ProductDetailPage() {
         }
         
         // Fetch related
-        const relRes = await api.products.getRelated(prod._id);
-        const related = relRes?.data ?? relRes;
+        const relRes: any = await api.products.getRelated(prod._id);
+        const related = relRes?.data?.items ?? relRes?.items ?? relRes?.data ?? relRes;
         setRelated(Array.isArray(related) ? related : []);
       } catch (error) {
         console.error('Failed to load product', error);
@@ -55,14 +55,17 @@ export default function ProductDetailPage() {
     return <div className="min-h-screen flex items-center justify-center">Product not found.</div>;
   }
 
-  const currentPrice = selectedVariant?.price || product.price;
-  const currentSalePrice = selectedVariant?.salePrice || product.salePrice;
+  const basePrice = selectedVariant?.price || product.price || product.variants?.[0]?.price || 0;
+  const currentSalePrice = selectedVariant?.salePrice || product.salePrice || product.variants?.[0]?.compareAtPrice;
+  const currentPrice = basePrice;
   const isOnSale = !!currentSalePrice && currentSalePrice < currentPrice;
-  const images = selectedVariant?.images?.length ? selectedVariant.images : product.images;
+
+  const rawImages = selectedVariant?.images?.length ? selectedVariant.images : product.images || [];
+  const images = rawImages.map((img: any) => (typeof img === 'string' ? img : img?.url || 'https://via.placeholder.com/600'));
 
   const handleAddToCart = async () => {
     if (!product) return;
-    const sku = selectedVariant?.sku || product.sku;
+    const sku = selectedVariant?.sku || product.sku || product.variants?.[0]?.sku;
     if (!sku) {
       console.error('No SKU available for this product');
       return;

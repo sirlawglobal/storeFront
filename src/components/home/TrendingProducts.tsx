@@ -1,16 +1,32 @@
-import React from 'react';
-import { ProductCard } from '../product/ProductCard'; // Will create soon
+'use client';
+import React, { useEffect, useState } from 'react';
+import { ProductCard } from '../product/ProductCard';
 import { Product } from '@/types';
-
-// Placeholder products
-const MOCK_PRODUCTS: Partial<Product>[] = [
-  { _id: '1', slug: 'vita-ortho', name: 'Vita Ortho Mattress', price: 125000, salePrice: 110000, images: ['https://images.unsplash.com/photo-1505693314120-0d443867891c?w=500&q=80'], averageRating: 4.8, reviewCount: 120, brand: 'Vitafoam' },
-  { _id: '2', slug: 'vita-spring', name: 'Vita Spring Firm', price: 250000, images: ['https://images.unsplash.com/photo-1540518614846-7eded433c457?w=500&q=80'], averageRating: 4.5, reviewCount: 85, brand: 'Vitafoam' },
-  { _id: '3', slug: 'memory-pillow', name: 'Memory Foam Pillow', price: 15000, images: ['https://images.unsplash.com/photo-1584100936595-c0654b35a146?w=500&q=80'], averageRating: 4.9, reviewCount: 340, brand: 'Vitafoam' },
-  { _id: '4', slug: 'leisure-mat', name: 'Leisure Mat', price: 12000, images: ['https://images.unsplash.com/photo-1629949009765-4fa81ba316ae?w=500&q=80'], averageRating: 4.2, reviewCount: 45, brand: 'Vitafoam' },
-];
+import { api } from '@/lib/api';
 
 export const TrendingProducts = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        const response: any = await api.products.list({ limit: 8 });
+        const list = response?.data?.items ?? response?.items ?? response?.data ?? response;
+        if (Array.isArray(list) && list.length > 0) {
+          setProducts(list);
+        }
+      } catch (err) {
+        console.error('Failed to load trending products:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   return (
     <section className="py-16 bg-background">
       <div className="container">
@@ -23,14 +39,26 @@ export const TrendingProducts = () => {
             View All
           </a>
         </div>
-        
-        <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 pb-4 snap-x snap-mandatory hide-scrollbar">
-          {MOCK_PRODUCTS.map((product) => (
-            <div key={product._id} className="flex-shrink-0 w-[280px] md:w-auto snap-center">
-              <ProductCard product={product as Product} />
-            </div>
-          ))}
-        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-64 bg-gray-100 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-8 text-text-secondary">
+            <p>No products featured yet. Check back soon!</p>
+          </div>
+        ) : (
+          <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 pb-4 snap-x snap-mandatory hide-scrollbar">
+            {products.map((product) => (
+              <div key={product._id} className="flex-shrink-0 w-[280px] md:w-auto snap-center">
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

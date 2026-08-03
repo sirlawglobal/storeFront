@@ -82,9 +82,10 @@ export interface ProductVariant {
   name: string;
   price: number;
   salePrice?: number;
-  stockQuantity: number;
-  images: string[];
-  attributes: Record<string, string>;
+  compareAtPrice?: number;
+  stockQuantity?: number;
+  images?: string[];
+  attributes?: Record<string, string>;
 }
 
 export interface CartItem {
