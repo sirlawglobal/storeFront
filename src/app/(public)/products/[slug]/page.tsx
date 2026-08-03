@@ -28,7 +28,7 @@ export default function ProductDetailPage() {
       setIsLoading(true);
       try {
         const response = await api.products.getBySlug(slug as string);
-        const prod = response.data as Product;
+        const prod = (response?.data ?? response) as Product;
         setProduct(prod);
         if (prod.variants && prod.variants.length > 0) {
           setSelectedVariant(prod.variants[0]);
@@ -36,7 +36,8 @@ export default function ProductDetailPage() {
         
         // Fetch related
         const relRes = await api.products.getRelated(prod._id);
-        setRelated(relRes.data as Product[]);
+        const related = relRes?.data ?? relRes;
+        setRelated(Array.isArray(related) ? related : []);
       } catch (error) {
         console.error('Failed to load product', error);
       } finally {

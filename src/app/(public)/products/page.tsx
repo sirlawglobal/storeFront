@@ -28,7 +28,8 @@ function ProductsPageContent() {
         }
 
         const response = await api.products.list(params);
-        setProducts(response.data as Product[]);
+        const list = response?.data ?? response;
+        setProducts(Array.isArray(list) ? list : []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
       } finally {

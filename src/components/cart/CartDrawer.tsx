@@ -26,7 +26,11 @@ export const CartDrawer = () => {
     setIsLoading(true);
     try {
       const res = await api.cart.get();
-      setCart(res.data as Cart);
+      // The interceptor returns the full body: { message, data: Cart }
+      const cartData = res?.data ?? res;
+      if (cartData && Array.isArray(cartData.items)) {
+        setCart(cartData as Cart);
+      }
     } catch (err) {
       console.error('Failed to load cart', err);
     } finally {
@@ -37,7 +41,8 @@ export const CartDrawer = () => {
   const handleUpdateQuantity = async (sku: string, quantity: number) => {
     try {
       const res = await api.cart.updateItem(sku, { quantity });
-      setCart(res.data as Cart);
+      const cartData = res?.data ?? res;
+      if (cartData && Array.isArray(cartData.items)) setCart(cartData as Cart);
     } catch (err) {
       console.error(err);
     }
@@ -46,7 +51,8 @@ export const CartDrawer = () => {
   const handleRemove = async (sku: string) => {
     try {
       const res = await api.cart.removeItem(sku);
-      setCart(res.data as Cart);
+      const cartData = res?.data ?? res;
+      if (cartData && Array.isArray(cartData.items)) setCart(cartData as Cart);
     } catch (err) {
       console.error(err);
     }
