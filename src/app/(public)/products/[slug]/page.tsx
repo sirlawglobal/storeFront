@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { ShoppingCart, Heart, Shield, Truck, RotateCcw, Star } from 'lucide-react';
 import { ProductImages } from '@/components/product/ProductImages';
 import { ProductVariants } from '@/components/product/ProductVariants';
@@ -11,10 +11,13 @@ import { api } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
 import { Product, ProductVariant } from '@/types';
 import { useCartStore } from '@/store/cart.store';
+import { useAuthStore } from '@/store/auth.store';
 
 export default function ProductDetailPage() {
   const { slug } = useParams();
-  const { openCart, setCart } = useCartStore(); // In real app, call addItem API
+  const router = useRouter();
+  const { isLoggedIn } = useAuthStore();
+  const { openCart, setCart } = useCartStore();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
@@ -22,6 +25,8 @@ export default function ProductDetailPage() {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -62,6 +67,29 @@ export default function ProductDetailPage() {
 
   const rawImages = selectedVariant?.images?.length ? selectedVariant.images : product.images || [];
   const images = rawImages.map((img: any) => (typeof img === 'string' ? img : img?.url || 'https://via.placeholder.com/600'));
+
+  const handleToggleWishlist = async () => {
+    if (!product) return;
+    if (!isLoggedIn) {
+      router.push(`/login?redirect=/products/${slug}`);
+      return;
+    }
+
+    setIsWishlistLoading(true);
+    try {
+      if (isWishlisted) {
+        await api.wishlist.removeItem(product._id);
+        setIsWishlisted(false);
+      } else {
+        await api.wishlist.addItem(product._id);
+        setIsWishlisted(true);
+      }
+    } catch (err: any) {
+      console.error('Wishlist toggle error:', err);
+    } finally {
+      setIsWishlistLoading(false);
+    }
+  };
 
   const handleAddToCart = async () => {
     if (!product) return;
@@ -176,8 +204,15 @@ export default function ProductDetailPage() {
               >
                 Add to Cart
               </Button>
-              <Button size="lg" variant="outline" className="px-6" title="Add to Wishlist">
-                <Heart size={20} />
+              <Button
+                size="lg"
+                variant="outline"
+                className={`px-6 ${isWishlisted ? 'border-red-500 text-red-500 bg-red-50' : ''}`}
+                title={isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                onClick={handleToggleWishlist}
+                isLoading={isWishlistLoading}
+              >
+                <Heart size={20} className={isWishlisted ? 'fill-red-500 text-red-500' : ''} />
               </Button>
             </div>
 
