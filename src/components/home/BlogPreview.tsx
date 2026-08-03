@@ -23,7 +23,7 @@ export const BlogPreview = () => {
       setIsLoading(true);
       try {
         const res: any = await api.articles.list({ limit: 3 });
-        const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
+        const list = res?.data?.data ?? res?.data?.items ?? res?.items ?? res?.data ?? res;
         if (Array.isArray(list) && list.length > 0) {
           setArticles(list);
         }
@@ -63,9 +63,12 @@ export const BlogPreview = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
             {articles.map((article) => {
               const bgImg =
+                (article as any).coverImage ||
                 article.featuredImage ||
                 article.image ||
                 'https://images.unsplash.com/photo-1505693314120-0d443867891c?w=500&q=80';
+              const tagLabel =
+                (article as any).tags?.[0] || article.category || article.tag || 'Sleep Health';
               const displayDate = article.createdAt
                 ? new Date(article.createdAt).toLocaleDateString('en-NG', {
                     day: 'numeric',
@@ -86,7 +89,7 @@ export const BlogPreview = () => {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     <span className="absolute top-2 left-2 bg-white/90 backdrop-blur text-xs font-semibold px-2 py-0.5 rounded text-primary">
-                      {article.category || article.tag || 'Sleep Health'}
+                      {tagLabel}
                     </span>
                   </Link>
                   <div className="p-4 md:p-5">

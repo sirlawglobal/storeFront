@@ -33,8 +33,8 @@ export default function ArticleDetailPage() {
       setNotFound(false);
       try {
         const res: any = await api.articles.getBySlug(slug as string);
-        const data = res?.data ?? res;
-        if (data && data._id) {
+        const data = res?.data?.data ?? res?.data ?? res;
+        if (data && (data._id || data.id)) {
           setArticle(data);
         } else {
           setNotFound(true);
