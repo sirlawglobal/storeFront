@@ -166,10 +166,16 @@ export default function ArticleDetailPage() {
         {/* Main Content */}
         <article className="prose prose-base md:prose-lg max-w-none text-text-secondary">
           {article.content ? (
-            // If content is HTML from a rich-text editor
-            article.content.trim().startsWith('<')
-              ? <div dangerouslySetInnerHTML={{ __html: article.content }} />
-              : <p className="whitespace-pre-wrap">{article.content}</p>
+            <div
+              dangerouslySetInnerHTML={{
+                __html: article.content
+                  .replace(/&lt;/g, '<')
+                  .replace(/&gt;/g, '>')
+                  .replace(/&quot;/g, '"')
+                  .replace(/&#39;/g, "'")
+                  .replace(/&amp;/g, '&'),
+              }}
+            />
           ) : (
             <p className="text-text-secondary italic">No content available for this article.</p>
           )}
