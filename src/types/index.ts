@@ -100,10 +100,14 @@ export interface CartItem {
 
 export interface Cart {
   _id?: string;
+  cartId?: string;
   items: CartItem[];
   subtotal: number;
+  subTotal?: number;
   totalDiscount: number;
+  discountAmount?: number;
   taxAmount: number;
+  shippingFee?: number;
   totalAmount: number;
   couponCode?: string;
 }
