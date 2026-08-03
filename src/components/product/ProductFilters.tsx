@@ -1,11 +1,10 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Filter, X, ChevronDown } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { api } from '@/lib/api';
 
-// Mock filter options - ideally fetched from API
-const CATEGORIES = ['Mattresses', 'Pillows', 'Furniture', 'Beddings', 'Accessories'];
 const PRICE_RANGES = [
   { label: 'Under ₦50,000', value: '0-50000' },
   { label: '₦50,000 - ₦100,000', value: '50000-100000' },
@@ -13,13 +12,42 @@ const PRICE_RANGES = [
   { label: 'Over ₦250,000', value: '250000-99999999' },
 ];
 
+interface CategoryItem {
+  _id: string;
+  name: string;
+  slug: string;
+}
+
 export const ProductFilters = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
 
   const currentCategory = searchParams.get('category');
   const currentPrice = searchParams.get('price');
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res: any = await api.categories.list();
+        const list = res?.data ?? res;
+        if (Array.isArray(list) && list.length > 0) {
+          setCategories(list);
+        } else {
+          setCategories([
+            { _id: '1', name: 'Mattresses', slug: 'mattresses' },
+            { _id: '2', name: 'Pillows', slug: 'pillows' },
+            { _id: '3', name: 'Furniture', slug: 'furniture' },
+            { _id: '4', name: 'Beddings', slug: 'beddings' },
+          ]);
+        }
+      } catch (err) {
+        console.error('Failed to load filter categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const updateFilter = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -32,7 +60,7 @@ export const ProductFilters = () => {
   };
 
   const clearFilters = () => {
-    router.push('?');
+    router.push('/products');
     setIsMobileOpen(false);
   };
 
@@ -43,17 +71,17 @@ export const ProductFilters = () => {
           Categories <ChevronDown size={16} />
         </h3>
         <ul className="space-y-2">
-          {CATEGORIES.map((cat) => (
-            <li key={cat}>
+          {categories.map((cat) => (
+            <li key={cat._id}>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
+                <input
+                  type="radio"
                   name="category"
-                  checked={currentCategory === cat.toLowerCase()}
-                  onChange={() => updateFilter('category', cat.toLowerCase())}
-                  className="text-primary focus:ring-primary h-4 w-4"
+                  checked={currentCategory === cat.slug.toLowerCase()}
+                  onChange={() => updateFilter('category', cat.slug.toLowerCase())}
+                  className="text-primary focus:ring-primary h-4 w-4 accent-primary"
                 />
-                <span className="text-sm">{cat}</span>
+                <span className="text-sm">{cat.name}</span>
               </label>
             </li>
           ))}
@@ -68,12 +96,12 @@ export const ProductFilters = () => {
           {PRICE_RANGES.map((range) => (
             <li key={range.value}>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="radio" 
+                <input
+                  type="radio"
                   name="price"
                   checked={currentPrice === range.value}
                   onChange={() => updateFilter('price', range.value)}
-                  className="text-primary focus:ring-primary h-4 w-4"
+                  className="text-primary focus:ring-primary h-4 w-4 accent-primary"
                 />
                 <span className="text-sm">{range.label}</span>
               </label>
@@ -92,13 +120,13 @@ export const ProductFilters = () => {
     <>
       {/* Mobile Filter Button */}
       <div className="lg:hidden mb-4">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => setIsMobileOpen(true)}
           leftIcon={<Filter size={18} />}
           className="w-full bg-white"
         >
-          Filters & Sort
+          Filters &amp; Sort
         </Button>
       </div>
 
@@ -126,7 +154,9 @@ export const ProductFilters = () => {
             </div>
             <FilterContent />
             <div className="mt-6 pt-4 border-t border-border sticky bottom-0 bg-white pb-4">
-              <Button className="w-full" onClick={() => setIsMobileOpen(false)}>Show Results</Button>
+              <Button className="w-full" onClick={() => setIsMobileOpen(false)}>
+                Show Results
+              </Button>
             </div>
           </div>
         </div>

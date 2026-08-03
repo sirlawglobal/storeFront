@@ -129,10 +129,9 @@ export const api = {
   cart: {
     get: () => apiClient.get('/cart'),
     addItem: (data: {
-      productId: string;
-      variantId?: string;
       sku: string;
       quantity: number;
+      options?: Record<string, any>;
     }) => apiClient.post('/cart/items', data),
     updateItem: (sku: string, data: { quantity: number }) =>
       apiClient.patch(`/cart/items/${sku}`, data),
@@ -176,5 +175,46 @@ export const api = {
     removeItem: (productId: string) => apiClient.delete(`/wishlist/${productId}`),
     moveToCart: (productId: string, variantId?: string) =>
       apiClient.post(`/wishlist/${productId}/move-to-cart`, { variantId }),
+  },
+
+  // ── Reviews ───────────────────────────────────────────────────────────────
+  reviews: {
+    getByProduct: (productId: string, params?: { page?: number; limit?: number }) =>
+      apiClient.get(`/reviews/products/${productId}`, { params }),
+    submit: (productId: string, data: { rating: number; title?: string; comment: string }) =>
+      apiClient.post(`/reviews/products/${productId}`, data),
+    markHelpful: (id: string) => apiClient.post(`/reviews/${id}/helpful`),
+  },
+
+  // ── Recommendations ───────────────────────────────────────────────────────
+  recommendations: {
+    getTrending: (limit?: number) =>
+      apiClient.get('/recommendations/trending', { params: { limit } }),
+    getPopular: (limit?: number) =>
+      apiClient.get('/recommendations/popular', { params: { limit } }),
+    getPersonalized: () => apiClient.get('/recommendations/me'),
+  },
+
+  // ── Articles / Blog ───────────────────────────────────────────────────────
+  articles: {
+    list: (params?: { tag?: string; page?: number; limit?: number }) =>
+      apiClient.get('/articles', { params }),
+    getBySlug: (slug: string) => apiClient.get(`/articles/${slug}`),
+  },
+
+  // ── Dealers Locator ───────────────────────────────────────────────────────
+  dealers: {
+    getNearby: (lat: number, lng: number, radius = 20) =>
+      apiClient.get('/dealers/nearby', { params: { lat, lng, radius } }),
+  },
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  notifications: {
+    list: (params?: { page?: number; limit?: number }) =>
+      apiClient.get('/notifications', { params }),
+    getUnreadCount: () => apiClient.get('/notifications/unread-count'),
+    markAllRead: () => apiClient.patch('/notifications/read-all'),
+    markRead: (id: string) => apiClient.patch(`/notifications/${id}/read`),
+    delete: (id: string) => apiClient.delete(`/notifications/${id}`),
   },
 };

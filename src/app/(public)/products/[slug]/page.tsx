@@ -73,8 +73,6 @@ export default function ProductDetailPage() {
     setIsAddingToCart(true);
     try {
       const cartRes: any = await api.cart.addItem({
-        productId: product._id,
-        variantId: selectedVariant?._id,
         sku,
         quantity,
       });
