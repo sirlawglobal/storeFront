@@ -13,6 +13,7 @@ interface BannerItem {
   ctaText: string;
   ctaLink: string;
   position?: string;
+  bannerType?: string;
 }
 
 const FALLBACK_BANNERS: BannerItem[] = [
@@ -51,12 +52,13 @@ export const HeroBanner = () => {
         if (Array.isArray(list) && list.length > 0) {
           const dynamicBanners: BannerItem[] = list.map((b: any, idx: number) => ({
             id: b._id || String(idx),
-            title: b.title || 'Experience Ultimate Comfort',
-            subtitle: b.subtitle || 'Discover premium sleep products tailored for your home.',
+            title: b.title || '',
+            subtitle: b.subtitle || '',
             image: b.imageUrl || FALLBACK_BANNERS[idx % 2].image,
             ctaText: b.buttonText || 'Shop Now',
             ctaLink: b.targetUrl || '/products',
             position: idx % 2 === 0 ? 'center' : 'left',
+            bannerType: b.bannerType || 'custom',
           }));
           setBanners(dynamicBanners);
         }
@@ -91,36 +93,57 @@ export const HeroBanner = () => {
           }`}
         >
           {/* Background Image */}
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${banner.image})` }}
-          />
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/40" />
-
-          {/* Content */}
-          <div className="container absolute inset-0 flex items-center justify-center md:justify-start">
+          {banner.bannerType === 'image_only' && banner.ctaLink ? (
+            <Link href={banner.ctaLink} className="absolute inset-0">
+              <div
+                className="absolute inset-0 bg-cover bg-center cursor-pointer"
+                style={{ backgroundImage: `url(${banner.image})` }}
+              />
+            </Link>
+          ) : (
             <div
-              className={`text-white max-w-xl text-center md:text-left px-4 ${
-                banner.position === 'center' ? 'mx-auto text-center md:text-center' : 'md:ml-12'
-              }`}
-            >
-              <h2 className="font-playfair text-4xl md:text-6xl font-bold mb-4 leading-tight animate-fade-in-up">
-                {banner.title}
-              </h2>
-              <p
-                className="text-lg md:text-xl mb-8 text-gray-200 animate-fade-in-up"
-                style={{ animationDelay: '100ms' }}
-              >
-                {banner.subtitle}
-              </p>
-              <Link href={banner.ctaLink} className="animate-fade-in-up inline-block" style={{ animationDelay: '200ms' }}>
-                <Button size="lg" className="px-8 font-semibold">
-                  {banner.ctaText}
-                </Button>
-              </Link>
-            </div>
-          </div>
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${banner.image})` }}
+            />
+          )}
+
+          {/* Overlay & Content (Only if not image_only) */}
+          {banner.bannerType !== 'image_only' && (
+            <>
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+
+              {/* Content */}
+              <div className="container absolute inset-0 flex items-center justify-center md:justify-start">
+                <div
+                  className={`text-white max-w-xl text-center md:text-left px-4 ${
+                    banner.position === 'center' ? 'mx-auto text-center md:text-center' : 'md:ml-12'
+                  }`}
+                >
+                  {banner.title && (
+                    <h2 className="font-playfair text-4xl md:text-6xl font-bold mb-4 leading-tight animate-fade-in-up">
+                      {banner.title}
+                    </h2>
+                  )}
+                  {banner.subtitle && (
+                    <p
+                      className="text-lg md:text-xl mb-8 text-gray-200 animate-fade-in-up"
+                      style={{ animationDelay: '100ms' }}
+                    >
+                      {banner.subtitle}
+                    </p>
+                  )}
+                  {banner.ctaLink && banner.ctaText && (
+                    <Link href={banner.ctaLink} className="animate-fade-in-up inline-block" style={{ animationDelay: '200ms' }}>
+                      <Button size="lg" className="px-8 font-semibold">
+                        {banner.ctaText}
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       ))}
 
