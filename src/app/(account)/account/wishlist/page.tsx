@@ -19,8 +19,13 @@ export default function WishlistPage() {
     setError('');
     try {
       const res: any = await api.wishlist.get();
-      const raw = res?.data ?? res;
-      const items = raw?.items ?? (Array.isArray(raw) ? raw : []);
+      // Handle multi-level response wrapping safely:
+      // res can be { success: true, data: { message: "...", data: { items: [...] } } }
+      let payload = res?.data ?? res;
+      if (payload?.data && typeof payload.data === 'object' && !Array.isArray(payload.data)) {
+        payload = payload.data;
+      }
+      const items = payload?.items ?? (Array.isArray(payload) ? payload : []);
 
       // Extract product objects safely whether items is Product[] or { productId: Product }[]
       const products: Product[] = items
