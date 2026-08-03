@@ -26,7 +26,10 @@ export default function LoginPage() {
     try {
       // Backend returns: { sessionToken, expiresAt, user: { id, firstName, lastName, email, role, isVerified } }
       const res: any = await api.auth.login(formData);
-      const { sessionToken, user: rawUser } = res;
+      // Backend TransformResponseInterceptor wraps payload in { success: true, data: { sessionToken, user, ... } }
+      const payload = res?.data ?? res;
+      const sessionToken = payload?.sessionToken || payload?.token;
+      const rawUser = payload?.user;
 
       if (!sessionToken || !rawUser) {
         throw new Error('Invalid response from server');
