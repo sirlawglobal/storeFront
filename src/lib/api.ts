@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/store/auth.store';
 
 // The Next.js rewrite redirects this to the real backend URL
 const baseURL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
@@ -36,8 +37,7 @@ apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('vita_token');
-      localStorage.removeItem('vita_user');
+      useAuthStore.getState().logout();
       // Only redirect if not already on login page or home
       const path = window.location.pathname;
       if (!path.startsWith('/login') && path.startsWith('/account')) {

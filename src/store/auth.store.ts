@@ -6,6 +6,8 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isLoggedIn: boolean;
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
   login: (user: User, token: string) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
@@ -29,12 +31,14 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isLoggedIn: false,
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
       login: (user, token) => {
         // Persist token to localStorage (for axios interceptor)
         localStorage.setItem('vita_token', token);
         // Also set a cookie so the Next.js middleware can enforce SSR route protection
         setCookie('vita_session_token', token, 7);
-        set({ user, token, isLoggedIn: true });
+        set({ user, token, isLoggedIn: true, _hasHydrated: true });
       },
       logout: () => {
         localStorage.removeItem('vita_token');
@@ -54,6 +58,9 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         isLoggedIn: state.isLoggedIn,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

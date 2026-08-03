@@ -14,7 +14,7 @@ type PaymentMethod = 'paystack' | 'flutterwave' | 'moniepoint' | 'opay';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { isLoggedIn, user } = useAuthStore();
+  const { isLoggedIn, _hasHydrated, user } = useAuthStore();
   const { cart, setCart, clearCart } = useCartStore();
 
   const [step, setStep] = useState(1);
@@ -69,14 +69,14 @@ export default function CheckoutPage() {
 
   // Auth guard
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (_hasHydrated && !isLoggedIn) {
       router.push('/login?redirect=/checkout');
     }
-  }, [isLoggedIn, router]);
+  }, [_hasHydrated, isLoggedIn, router]);
 
   // Load user's saved addresses
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!_hasHydrated || !isLoggedIn) return;
     const loadAddresses = async () => {
       setIsLoadingAddresses(true);
       try {
@@ -96,9 +96,9 @@ export default function CheckoutPage() {
       }
     };
     loadAddresses();
-  }, [isLoggedIn]);
+  }, [_hasHydrated, isLoggedIn]);
 
-  if (!isLoggedIn || !cart || cart.items.length === 0) return null;
+  if (!_hasHydrated || !isLoggedIn || !cart || cart.items.length === 0) return null;
 
   const selectedAddress = addresses.find((a) => a._id === selectedAddressId);
 

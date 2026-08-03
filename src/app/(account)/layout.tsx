@@ -19,19 +19,19 @@ const NAV_ITEMS = [
 ];
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn, logout } = useAuthStore();
+  const { isLoggedIn, _hasHydrated, logout } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Basic client-side protection (middleware handles SSR protection)
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (_hasHydrated && !isLoggedIn) {
       router.push('/login');
     }
-  }, [isLoggedIn, router]);
+  }, [_hasHydrated, isLoggedIn, router]);
 
-  if (!isLoggedIn) return null; // Avoid flash of protected content
+  if (!_hasHydrated || !isLoggedIn) return null; // Avoid flash of protected content during hydration
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
