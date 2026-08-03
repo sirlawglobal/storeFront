@@ -38,7 +38,7 @@ export default function SleepQuizPage() {
         const list = data?.questions || (Array.isArray(data) ? data : []);
 
         if (Array.isArray(list) && list.length > 0) {
-          const normalized: QuizQuestion[] = list.slice(0, 6).map((q: any) => {
+          const normalized: QuizQuestion[] = list.map((q: any) => {
             let opts: string[] = q.options || [];
             if (q.type === 'boolean') opts = ['Yes', 'No'];
             if (!opts.length) opts = ['Standard', 'Custom'];
