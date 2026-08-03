@@ -1,13 +1,59 @@
 // Shared TypeScript types mirroring backend interfaces
 
 export interface User {
-  _id: string;
+  _id: string;   // FE canonical id
+  id?: string;   // Backend login response returns `id` — mapped to `_id` on login
   email: string;
-  phone: string;
+  phone?: string;
   firstName: string;
   lastName: string;
   avatarUrl?: string;
   role: string;
+  isVerified?: boolean;
+}
+
+export interface Address {
+  _id: string;
+  label: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode?: string;
+  country?: string;
+  isDefault: boolean;
+  coordinates?: [number, number];
+}
+
+export interface OrderItem {
+  sku: string;
+  name: string;
+  quantity: number;
+  price: number;
+  image?: string;
+  variantName?: string;
+}
+
+export interface Order {
+  _id: string;
+  orderNumber: string;
+  status: string;
+  items: OrderItem[];
+  subtotal: number;
+  totalDiscount: number;
+  taxAmount: number;
+  totalAmount: number;
+  shippingAddress?: Address;
+  paymentMethod?: string;
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
+}
+
+export interface OrderTracking {
+  status: string;
+  timestamp: string;
+  description: string;
+  location?: string;
 }
 
 export interface Product {

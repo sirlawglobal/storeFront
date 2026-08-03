@@ -8,15 +8,18 @@ function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const identifier = searchParams.get('identifier') || '';
-  
+  const type = searchParams.get('type') || 'email'; // 'email' or 'phone'
+
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState('');
+  const [resendMessage, setResendMessage] = useState('');
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -33,6 +36,14 @@ function VerifyOtpForm() {
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted.length === 6) {
+      setOtp(pasted.split(''));
+      inputRefs.current[5]?.focus();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otp.join('');
@@ -40,10 +51,14 @@ function VerifyOtpForm() {
 
     setIsLoading(true);
     setError('');
-    
+
     try {
-      // Assuming email verification for this example
-      await api.auth.verifyEmail({ email: identifier, otp: code });
+      // Backend VerifyOtpDto expects: { identifier: string, otp: string }
+      if (type === 'phone') {
+        await api.auth.verifyPhone({ identifier, otp: code });
+      } else {
+        await api.auth.verifyEmail({ identifier, otp: code });
+      }
       router.push('/login?verified=true');
     } catch (err: any) {
       setError(err.message || 'Invalid or expired OTP');
@@ -52,12 +67,27 @@ function VerifyOtpForm() {
     }
   };
 
+  const handleResend = async () => {
+    setIsResending(true);
+    setError('');
+    setResendMessage('');
+    try {
+      await api.auth.resendOtp({ identifier });
+      setResendMessage('A new code has been sent.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend OTP');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <div className="p-8 md:p-10">
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-text-primary mb-2">Verify Account</h1>
         <p className="text-sm text-text-secondary">
-          Enter the 6-digit code sent to <br/><span className="font-medium text-text-primary">{identifier}</span>
+          Enter the 6-digit code sent to <br />
+          <span className="font-medium text-text-primary">{identifier}</span>
         </p>
       </div>
 
@@ -66,14 +96,20 @@ function VerifyOtpForm() {
           {error}
         </div>
       )}
+      {resendMessage && (
+        <div className="bg-green-50 border border-success text-success text-sm p-3 rounded-md mb-6">
+          {resendMessage}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="flex justify-between gap-2 max-w-xs mx-auto">
+        <div className="flex justify-between gap-2 max-w-xs mx-auto" onPaste={handlePaste}>
           {otp.map((digit, idx) => (
             <input
               key={idx}
               ref={(el) => { inputRefs.current[idx] = el; }}
               type="text"
+              inputMode="numeric"
               maxLength={1}
               value={digit}
               onChange={(e) => handleChange(idx, e.target.value)}
@@ -83,15 +119,25 @@ function VerifyOtpForm() {
           ))}
         </div>
 
-        <Button type="submit" className="w-full h-12 text-base" isLoading={isLoading} disabled={otp.join('').length < 6}>
+        <Button
+          type="submit"
+          className="w-full h-12 text-base"
+          isLoading={isLoading}
+          disabled={otp.join('').length < 6}
+        >
           Verify Code
         </Button>
       </form>
 
       <div className="mt-8 text-center text-sm">
-        <p className="text-text-secondary mb-2">Didn't receive the code?</p>
-        <button className="text-primary font-medium hover:underline disabled:opacity-50">
-          Resend Code
+        <p className="text-text-secondary mb-2">Didn&apos;t receive the code?</p>
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={isResending}
+          className="text-primary font-medium hover:underline disabled:opacity-50"
+        >
+          {isResending ? 'Sending...' : 'Resend Code'}
         </button>
       </div>
     </div>

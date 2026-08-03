@@ -16,9 +16,11 @@ apiClient.interceptors.request.use(
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('vita_token');
       if (token) {
+        // Backend accepts both X-Session-Token and Authorization: Bearer
+        config.headers['X-Session-Token'] = token;
         config.headers.Authorization = `Bearer ${token}`;
       }
-      
+
       const guestId = localStorage.getItem('vita_guest_id');
       if (guestId) {
         config.headers['X-Guest-Session-ID'] = guestId;
@@ -29,7 +31,7 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor
+// Response Interceptor — unwraps response.data once
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
@@ -46,45 +48,133 @@ apiClient.interceptors.response.use(
   }
 );
 
+// ─────────────────────────────────────────────────────────────────────────────
 // API Service Object
+// NOTE: The axios response interceptor already unwraps `response.data`, so all
+// calls below resolve directly to the data payload (not an AxiosResponse).
+// ─────────────────────────────────────────────────────────────────────────────
 export const api = {
-  // --- Auth ---
+  // ── Auth ──────────────────────────────────────────────────────────────────
   auth: {
-    login: (data: any) => apiClient.post('/auth/login', data),
-    register: (data: any) => apiClient.post('/auth/register', data),
-    verifyPhone: (data: any) => apiClient.post('/auth/verify-phone', data),
-    verifyEmail: (data: any) => apiClient.post('/auth/verify-email', data),
-    forgotPassword: (data: any) => apiClient.post('/auth/forgot-password', data),
-    resetPassword: (data: any) => apiClient.post('/auth/reset-password', data),
+    login: (data: { identifier: string; password: string }) =>
+      apiClient.post('/auth/login', data),
+    register: (data: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      password: string;
+    }) => apiClient.post('/auth/register', data),
+    verifyPhone: (data: { identifier: string; otp: string }) =>
+      apiClient.post('/auth/verify-phone', data),
+    verifyEmail: (data: { identifier: string; otp: string }) =>
+      apiClient.post('/auth/verify-email', data),
+    resendOtp: (data: { identifier: string }) =>
+      apiClient.post('/auth/resend-otp', data),
+    forgotPassword: (data: { email: string }) =>
+      apiClient.post('/auth/forgot-password', data),
+    resetPassword: (data: { email: string; otp: string; newPassword: string }) =>
+      apiClient.post('/auth/reset-password', data),
     logout: () => apiClient.post('/auth/logout'),
+    logoutAll: () => apiClient.post('/auth/logout-all'),
+    listSessions: () => apiClient.get('/auth/sessions'),
   },
 
-  // --- Users ---
+  // ── Users / Profile ───────────────────────────────────────────────────────
   users: {
     getProfile: () => apiClient.get('/users/me'),
-    updateProfile: (data: any) => apiClient.patch('/users/me', data),
+    updateProfile: (data: { firstName?: string; lastName?: string; avatarUrl?: string }) =>
+      apiClient.patch('/users/me', data),
+    deleteAccount: () => apiClient.delete('/users/me'),
+    // Address book
+    getAddresses: () => apiClient.get('/users/me/addresses'),
+    addAddress: (data: {
+      label: string;
+      street: string;
+      city: string;
+      state: string;
+      postalCode?: string;
+      country?: string;
+      isDefault?: boolean;
+      coordinates?: [number, number];
+    }) => apiClient.post('/users/me/addresses', data),
+    updateAddress: (addressId: string, data: Record<string, any>) =>
+      apiClient.patch(`/users/me/addresses/${addressId}`, data),
+    deleteAddress: (addressId: string) =>
+      apiClient.delete(`/users/me/addresses/${addressId}`),
+    // Preferences
+    updatePreferences: (data: {
+      newsletter?: boolean;
+      smsAlerts?: boolean;
+      pushNotifications?: boolean;
+      sleepPosition?: 'side' | 'back' | 'stomach';
+      bodyWeightKg?: number;
+      mattressPreference?: 'soft' | 'medium' | 'firm' | 'extra-firm';
+    }) => apiClient.patch('/users/me/preferences', data),
   },
 
-  // --- Catalog ---
+  // ── Catalog ───────────────────────────────────────────────────────────────
   products: {
-    list: (params?: any) => apiClient.get('/products', { params }),
+    list: (params?: Record<string, any>) =>
+      apiClient.get('/products', { params }),
     getBySlug: (slug: string) => apiClient.get(`/products/${slug}`),
     getRelated: (id: string) => apiClient.get(`/products/${id}/related`),
   },
-  
+
   categories: {
     list: () => apiClient.get('/categories/tree'),
   },
 
-  // --- Cart ---
+  // ── Cart ──────────────────────────────────────────────────────────────────
   cart: {
     get: () => apiClient.get('/cart'),
-    addItem: (data: any) => apiClient.post('/cart/items', data),
-    updateItem: (sku: string, data: any) => apiClient.patch(`/cart/items/${sku}`, data),
+    addItem: (data: {
+      productId: string;
+      variantId?: string;
+      sku: string;
+      quantity: number;
+    }) => apiClient.post('/cart/items', data),
+    updateItem: (sku: string, data: { quantity: number }) =>
+      apiClient.patch(`/cart/items/${sku}`, data),
     removeItem: (sku: string) => apiClient.delete(`/cart/items/${sku}`),
     clear: () => apiClient.delete('/cart'),
-    applyCoupon: (couponCode: string) => apiClient.post('/cart/apply-coupon', { couponCode }),
+    applyCoupon: (couponCode: string) =>
+      apiClient.post('/cart/apply-coupon', { couponCode }),
     removeCoupon: () => apiClient.delete('/cart/coupon'),
-    mergeGuestCart: (guestSessionId: string) => apiClient.post('/cart/merge', { guestSessionId }),
+    mergeGuestCart: (guestSessionId: string) =>
+      apiClient.post('/cart/merge', { guestSessionId }),
+  },
+
+  // ── Checkout ──────────────────────────────────────────────────────────────
+  checkout: {
+    calculateFees: (data: { shippingAddressId: string }) =>
+      apiClient.post('/checkout/calculate-fees', data),
+    validateAddress: (addressId: string) =>
+      apiClient.get(`/checkout/validate-address/${addressId}`),
+    initiate: (data: {
+      shippingAddressId: string;
+      billingAddressId?: string;
+      paymentMethod: 'paystack' | 'flutterwave' | 'moniepoint' | 'opay';
+      notes?: string;
+    }) => apiClient.post('/checkout/initiate', data),
+  },
+
+  // ── Orders ────────────────────────────────────────────────────────────────
+  orders: {
+    list: (params?: { page?: number; limit?: number }) =>
+      apiClient.get('/orders', { params }),
+    getById: (id: string) => apiClient.get(`/orders/${id}`),
+    getTracking: (id: string) => apiClient.get(`/orders/${id}/tracking`),
+    cancel: (id: string, data: { reason: string }) =>
+      apiClient.post(`/orders/${id}/cancel`, data),
+  },
+
+  // ── Wishlist ──────────────────────────────────────────────────────────────
+  wishlist: {
+    get: () => apiClient.get('/wishlist'),
+    addItem: (productId: string) => apiClient.post('/wishlist', { productId }),
+    removeItem: (productId: string) => apiClient.delete(`/wishlist/${productId}`),
+    moveToCart: (productId: string, variantId?: string) =>
+      apiClient.post(`/wishlist/${productId}/move-to-cart`, { variantId }),
   },
 };

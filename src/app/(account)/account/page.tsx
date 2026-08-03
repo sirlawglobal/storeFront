@@ -25,8 +25,9 @@ export default function ProfilePage() {
     setMessage('');
     
     try {
-      const res = await api.users.updateProfile(formData);
-      updateUser(res.data);
+      // Axios interceptor already unwraps response.data, so `res` IS the updated user object
+      const res: any = await api.users.updateProfile(formData);
+      updateUser({ ...res, _id: res._id || res.id });
       setMessage('Profile updated successfully');
       setIsEditing(false);
     } catch (err: any) {

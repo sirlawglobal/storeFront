@@ -24,11 +24,19 @@ export default function LoginPage() {
     setError('');
     
     try {
-      const res = await api.auth.login(formData);
-      const { user, token } = res.data;
-      
-      // Save auth state
-      login(user, token);
+      // Backend returns: { sessionToken, expiresAt, user: { id, firstName, lastName, email, role, isVerified } }
+      const res: any = await api.auth.login(formData);
+      const { sessionToken, user: rawUser } = res;
+
+      if (!sessionToken || !rawUser) {
+        throw new Error('Invalid response from server');
+      }
+
+      // Normalise: backend returns `id`, frontend uses `_id`
+      const user = { ...rawUser, _id: rawUser.id || rawUser._id };
+
+      // Save auth state — token is the sessionToken
+      login(user, sessionToken);
       
       // Merge guest cart automatically
       const guestId = getGuestId();

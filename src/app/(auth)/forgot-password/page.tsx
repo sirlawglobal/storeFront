@@ -1,10 +1,12 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -15,10 +17,13 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     setError('');
     setMessage('');
-    
+
     try {
       await api.auth.forgotPassword({ email });
-      setMessage('Password reset instructions have been sent to your email.');
+      setMessage('Check your email for the reset code. Redirecting...');
+      setTimeout(() => {
+        router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+      }, 1500);
     } catch (err: any) {
       setError(err.message || 'Failed to process request');
     } finally {
