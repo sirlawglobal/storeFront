@@ -6,6 +6,7 @@ import { User, Package, Heart, Bell, Settings, LogOut, ShieldCheck, MapPin } fro
 import { useAuthStore } from '@/store/auth.store';
 import { Header } from '@/components/layout/Header';
 import { MobileDrawer } from '@/components/layout/MobileDrawer';
+import { CartDrawer } from '@/components/cart/CartDrawer';
 
 const NAV_ITEMS = [
   { name: 'Profile', href: '/account', icon: <User size={20} /> },
@@ -106,6 +107,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           })}
         </ul>
       </nav>
+      <CartDrawer />
     </div>
   );
 }

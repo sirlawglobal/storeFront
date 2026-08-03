@@ -217,4 +217,22 @@ export const api = {
     markRead: (id: string) => apiClient.patch(`/notifications/${id}/read`),
     delete: (id: string) => apiClient.delete(`/notifications/${id}`),
   },
+
+  // ── Warranty ──────────────────────────────────────────────────────────────
+  warranty: {
+    list: (params?: { page?: number; limit?: number }) =>
+      apiClient.get('/warranty/me', { params }),
+    getById: (id: string) => apiClient.get(`/warranty/${id}`),
+    register: (data: { serialNumber: string; productId: string; purchaseDate: string }) =>
+      apiClient.post('/warranty/register', data),
+    fileClaim: (id: string, data: { description: string; images?: string[] }) =>
+      apiClient.post(`/warranty/${id}/claim`, data),
+  },
+
+  // ── Promotions & Banners ──────────────────────────────────────────────────
+  promotions: {
+    getActive: () => apiClient.get('/promotions/active'),
+    validate: (code: string, cartTotal: number, productIds?: string[]) =>
+      apiClient.post('/promotions/validate', { code, cartTotal, productIds }),
+  },
 };

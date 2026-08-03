@@ -15,9 +15,9 @@ export const CartDrawer = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Load cart data when drawer opens
+  // Load fresh cart data whenever drawer opens
   useEffect(() => {
-    if (isOpen && !cart) {
+    if (isOpen) {
       loadCart();
     }
   }, [isOpen]);
