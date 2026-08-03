@@ -31,7 +31,6 @@ export const FeaturedCategories = () => {
         if (Array.isArray(list) && list.length > 0) {
           setCategories(list);
         } else {
-          // Fallback static categories
           setCategories([
             { _id: '1', name: 'Mattresses', slug: 'mattresses' },
             { _id: '2', name: 'Pillows', slug: 'pillows' },
@@ -55,18 +54,20 @@ export const FeaturedCategories = () => {
   }, []);
 
   return (
-    <section className="py-16 bg-white">
-      <div className="container">
-        <h2 className="text-3xl font-playfair font-bold text-center mb-10 text-primary">Shop by Category</h2>
+    <section className="py-10 md:py-16 bg-white">
+      <div className="container px-4 md:px-6">
+        <h2 className="text-2xl md:text-3xl font-playfair font-bold text-center mb-6 md:mb-10 text-primary">
+          Shop by Category
+        </h2>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-80 bg-gray-100 rounded-xl animate-pulse" />
+              <div key={i} className="h-44 md:h-80 bg-gray-100 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 pb-4 snap-x snap-mandatory hide-scrollbar">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             {categories.slice(0, 8).map((cat) => {
               const bgImg =
                 cat.imageUrl ||
@@ -78,16 +79,16 @@ export const FeaturedCategories = () => {
                 <Link
                   href={`/products?category=${cat.slug}`}
                   key={cat._id}
-                  className="flex-shrink-0 w-64 md:w-auto snap-center group relative h-80 rounded-xl overflow-hidden block"
+                  className="group relative h-44 md:h-80 rounded-xl overflow-hidden block"
                 >
                   <div
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                     style={{ backgroundImage: `url(${bgImg})` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <h3 className="text-white text-xl font-bold font-playfair mb-1">{cat.name}</h3>
-                    <span className="text-white/80 text-sm font-medium group-hover:text-accent transition-colors flex items-center gap-1">
+                  <div className="absolute bottom-3 md:bottom-6 left-3 md:left-6 right-3 md:right-6">
+                    <h3 className="text-white text-base md:text-xl font-bold font-playfair mb-0.5 md:mb-1">{cat.name}</h3>
+                    <span className="text-white/80 text-xs md:text-sm font-medium group-hover:text-accent transition-colors flex items-center gap-1">
                       Explore <span className="transform transition-transform group-hover:translate-x-1">→</span>
                     </span>
                   </div>

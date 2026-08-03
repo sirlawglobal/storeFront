@@ -41,26 +41,26 @@ export const BlogPreview = () => {
   }
 
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container">
-        <div className="flex justify-between items-end mb-10">
+    <section className="py-10 md:py-16 bg-gray-50">
+      <div className="container px-4 md:px-6">
+        <div className="flex justify-between items-end mb-6 md:mb-10">
           <div>
-            <h2 className="text-3xl font-playfair font-bold text-primary mb-2">Sleep Tips & Lifestyle</h2>
-            <p className="text-text-secondary">Read our latest articles for a better night&apos;s rest.</p>
+            <h2 className="text-2xl md:text-3xl font-playfair font-bold text-primary mb-1 md:mb-2">Sleep Tips &amp; Lifestyle</h2>
+            <p className="text-sm md:text-base text-text-secondary">Read our latest articles for a better night&apos;s rest.</p>
           </div>
-          <Link href="/articles" className="hidden sm:inline-block text-primary font-medium hover:underline">
+          <Link href="/articles" className="hidden sm:inline-block text-primary font-medium hover:underline text-sm ml-4 shrink-0">
             View All Articles
           </Link>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-64 bg-gray-200 rounded-xl animate-pulse" />
+              <div key={i} className="h-52 md:h-64 bg-gray-200 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
             {articles.map((article) => {
               const bgImg =
                 article.featuredImage ||
@@ -85,14 +85,14 @@ export const BlogPreview = () => {
                       alt={article.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <span className="absolute top-3 left-3 bg-white/90 backdrop-blur text-xs font-semibold px-2 py-1 rounded text-primary">
+                    <span className="absolute top-2 left-2 bg-white/90 backdrop-blur text-xs font-semibold px-2 py-0.5 rounded text-primary">
                       {article.category || article.tag || 'Sleep Health'}
                     </span>
                   </Link>
-                  <div className="p-5">
-                    <p className="text-xs text-text-secondary mb-2">{displayDate}</p>
+                  <div className="p-4 md:p-5">
+                    <p className="text-xs text-text-secondary mb-1 md:mb-2">{displayDate}</p>
                     <Link href={`/articles/${article.slug}`}>
-                      <h3 className="font-playfair text-xl font-bold text-primary mb-3 leading-tight group-hover:text-primary-light transition-colors">
+                      <h3 className="font-playfair text-base md:text-xl font-bold text-primary mb-2 md:mb-3 leading-tight group-hover:text-primary-light transition-colors line-clamp-2">
                         {article.title}
                       </h3>
                     </Link>
@@ -109,10 +109,10 @@ export const BlogPreview = () => {
           </div>
         )}
 
-        <div className="mt-8 text-center sm:hidden">
+        <div className="mt-6 text-center sm:hidden">
           <Link
             href="/articles"
-            className="inline-block border border-border px-6 py-3 rounded-md font-medium text-text-primary hover:bg-gray-50"
+            className="inline-block border border-border px-6 py-3 rounded-md font-medium text-text-primary hover:bg-gray-50 text-sm"
           >
             View All Articles
           </Link>

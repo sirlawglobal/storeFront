@@ -84,7 +84,7 @@ export const HeroBanner = () => {
   const prev = () => setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
 
   return (
-    <div className="relative w-full h-[70vh] min-h-[500px] overflow-hidden bg-gray-900 group">
+    <div className="relative w-full h-[45vh] min-h-[280px] md:h-[60vh] md:min-h-[400px] lg:h-[70vh] lg:min-h-[500px] overflow-hidden bg-gray-900 group">
       {banners.map((banner, index) => (
         <div
           key={banner.id}
@@ -116,18 +116,18 @@ export const HeroBanner = () => {
               {/* Content */}
               <div className="container absolute inset-0 flex items-center justify-center md:justify-start">
                 <div
-                  className={`text-white max-w-xl text-center md:text-left px-4 ${
+                  className={`text-white max-w-xl w-full text-center md:text-left px-4 sm:px-6 ${
                     banner.position === 'center' ? 'mx-auto text-center md:text-center' : 'md:ml-12'
                   }`}
                 >
                   {banner.title && (
-                    <h2 className="font-playfair text-4xl md:text-6xl font-bold mb-4 leading-tight animate-fade-in-up">
+                    <h2 className="font-playfair text-3xl sm:text-4xl md:text-6xl font-bold mb-3 md:mb-4 leading-tight animate-fade-in-up">
                       {banner.title}
                     </h2>
                   )}
                   {banner.subtitle && (
                     <p
-                      className="text-lg md:text-xl mb-8 text-gray-200 animate-fade-in-up"
+                      className="text-base sm:text-lg md:text-xl mb-6 md:mb-8 text-gray-200 animate-fade-in-up"
                       style={{ animationDelay: '100ms' }}
                     >
                       {banner.subtitle}

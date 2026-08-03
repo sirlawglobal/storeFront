@@ -45,11 +45,11 @@ function ProductsPageContent() {
       <div className="container">
         
         {/* Page Header */}
-        <div className="mb-8 bg-white p-8 rounded-2xl border border-border text-center">
-          <h1 className="text-3xl md:text-4xl font-playfair font-bold text-primary mb-2">
+        <div className="mb-6 md:mb-8 bg-white p-5 md:p-8 rounded-2xl border border-border text-center">
+          <h1 className="text-2xl md:text-4xl font-playfair font-bold text-primary mb-2">
             All Products
           </h1>
-          <p className="text-text-secondary max-w-2xl mx-auto">
+          <p className="text-sm text-text-secondary max-w-2xl mx-auto">
             Explore our complete range of premium mattresses, pillows, and sleep accessories designed for your ultimate comfort.
           </p>
         </div>

@@ -83,7 +83,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* Image container */}
       <Link href={`/products/${product.slug}`} className="relative aspect-square overflow-hidden bg-gray-100 block">
         {isOnSale && (
-          <div className="absolute top-3 left-3 z-10 bg-error text-white text-xs font-bold px-2 py-1 rounded shadow-xs">
+          <div className="absolute top-2 left-2 z-10 bg-error text-white text-[10px] md:text-xs font-bold px-1.5 md:px-2 py-0.5 md:py-1 rounded shadow-xs">
             SALE
           </div>
         )}
@@ -91,14 +91,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <button
           onClick={handleToggleWishlist}
           disabled={isWishlistLoading}
-          className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-sm ${
+          className={`absolute top-2 right-2 z-10 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all shadow-sm ${
             isWishlisted
               ? 'bg-white text-red-500 scale-100'
-              : 'bg-white/80 backdrop-blur text-gray-500 hover:text-red-500 group-hover:opacity-100 opacity-80 md:opacity-0'
+              : 'bg-white/80 backdrop-blur text-gray-500 hover:text-red-500 opacity-80'
           }`}
           title={isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
         >
-          <Heart size={18} className={isWishlisted ? 'fill-red-500 text-red-500' : ''} />
+          <Heart size={16} className={isWishlisted ? 'fill-red-500 text-red-500' : ''} />
         </button>
 
         <img
@@ -107,12 +107,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
 
-        {/* Quick Add Overlay (Desktop) */}
-        <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 hidden md:block bg-gradient-to-t from-black/50 to-transparent">
+        {/* Quick Add Overlay (Desktop only) */}
+        <div className="absolute inset-x-0 bottom-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 hidden md:block bg-gradient-to-t from-black/50 to-transparent">
           <Button
             variant="primary"
-            className="w-full shadow-lg"
-            leftIcon={<ShoppingCart size={18} />}
+            className="w-full shadow-lg text-sm"
+            leftIcon={<ShoppingCart size={16} />}
             onClick={handleQuickAdd}
             isLoading={isCartLoading}
           >
@@ -122,26 +122,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </Link>
 
       {/* Content */}
-      <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-center gap-1 mb-2">
-          <Star size={14} className="fill-accent text-accent" />
-          <span className="text-xs font-medium">{Number(rating).toFixed(1)}</span>
-          <span className="text-xs text-text-secondary">({product.reviewCount || 0})</span>
+      <div className="p-3 md:p-4 flex flex-col flex-1">
+        <div className="flex items-center gap-1 mb-1.5 md:mb-2">
+          <Star size={12} className="fill-accent text-accent" />
+          <span className="text-[11px] md:text-xs font-medium">{Number(rating).toFixed(1)}</span>
+          <span className="text-[11px] md:text-xs text-text-secondary">({product.reviewCount || 0})</span>
         </div>
 
         <Link href={`/products/${product.slug}`}>
-          <h3 className="font-medium text-text-primary hover:text-primary transition-colors line-clamp-2 mb-2">
+          <h3 className="font-medium text-xs md:text-sm text-text-primary hover:text-primary transition-colors line-clamp-2 mb-2">
             {product.name}
           </h3>
         </Link>
 
-        <div className="mt-auto pt-2 flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <span className="font-bold text-lg text-primary">{formatPrice(salePrice ?? basePrice)}</span>
+        <div className="mt-auto pt-1 md:pt-2 flex items-center justify-between gap-1">
+          <div className="flex items-baseline gap-1 md:gap-2 flex-wrap">
+            <span className="font-bold text-sm md:text-lg text-primary">{formatPrice(salePrice ?? basePrice)}</span>
             {isOnSale && (
-              <span className="text-xs text-text-secondary line-through">{formatPrice(basePrice)}</span>
+              <span className="text-[10px] md:text-xs text-text-secondary line-through">{formatPrice(basePrice)}</span>
             )}
           </div>
+          {/* Mobile Quick Add Button */}
+          <button
+            onClick={handleQuickAdd}
+            disabled={isCartLoading}
+            className="md:hidden w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shrink-0 shadow-sm active:scale-95 transition-transform"
+            title="Add to cart"
+          >
+            <ShoppingCart size={14} />
+          </button>
         </div>
       </div>
     </div>

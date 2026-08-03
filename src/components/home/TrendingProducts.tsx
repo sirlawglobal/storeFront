@@ -28,22 +28,22 @@ export const TrendingProducts = () => {
   }, []);
 
   return (
-    <section className="py-16 bg-background">
-      <div className="container">
-        <div className="flex justify-between items-end mb-10">
+    <section className="py-10 md:py-16 bg-background">
+      <div className="container px-4 md:px-6">
+        <div className="flex justify-between items-end mb-6 md:mb-10">
           <div>
-            <h2 className="text-3xl font-playfair font-bold text-primary mb-2">Trending Now</h2>
-            <p className="text-text-secondary">Our most popular products this week.</p>
+            <h2 className="text-2xl md:text-3xl font-playfair font-bold text-primary mb-1 md:mb-2">Trending Now</h2>
+            <p className="text-sm md:text-base text-text-secondary">Our most popular products this week.</p>
           </div>
-          <a href="/products" className="hidden sm:inline-block text-primary font-medium hover:underline">
+          <a href="/products" className="text-sm text-primary font-medium hover:underline shrink-0 ml-4">
             View All
           </a>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-64 bg-gray-100 rounded-xl animate-pulse" />
+              <div key={i} className="h-56 md:h-64 bg-gray-100 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : products.length === 0 ? (
@@ -51,11 +51,9 @@ export const TrendingProducts = () => {
             <p>No products featured yet. Check back soon!</p>
           </div>
         ) : (
-          <div className="flex overflow-x-auto md:grid md:grid-cols-4 gap-6 pb-4 snap-x snap-mandatory hide-scrollbar">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             {products.map((product) => (
-              <div key={product._id} className="flex-shrink-0 w-[280px] md:w-auto snap-center">
-                <ProductCard product={product} />
-              </div>
+              <ProductCard key={product._id} product={product} />
             ))}
           </div>
         )}

@@ -118,10 +118,12 @@ export default function ProductDetailPage() {
     <div className="bg-white min-h-screen pb-24 lg:pb-8">
       {/* Breadcrumb - Optional */}
       <div className="bg-gray-50 border-b border-border py-3">
-        <div className="container text-sm text-text-secondary flex gap-2">
-          <a href="/" className="hover:text-primary">Home</a> / 
-          <a href="/products" className="hover:text-primary">Products</a> / 
-          <span className="text-text-primary">{product.name}</span>
+        <div className="container text-xs md:text-sm text-text-secondary flex items-center gap-1 md:gap-2 overflow-hidden">
+          <a href="/" className="hover:text-primary shrink-0">Home</a>
+          <span className="shrink-0">/</span>
+          <a href="/products" className="hover:text-primary shrink-0">Products</a>
+          <span className="shrink-0">/</span>
+          <span className="text-text-primary truncate">{product.name}</span>
         </div>
       </div>
 
@@ -152,17 +154,17 @@ export default function ProductDetailPage() {
               </span>
             </div>
 
-            <div className="flex items-baseline gap-3 mb-8">
+            <div className="flex items-baseline gap-2 md:gap-3 mb-6 md:mb-8 flex-wrap">
               {isOnSale ? (
                 <>
-                  <span className="text-3xl font-bold text-primary">{formatPrice(currentSalePrice!)}</span>
-                  <span className="text-lg text-text-secondary line-through">{formatPrice(currentPrice)}</span>
-                  <span className="ml-2 text-sm font-bold text-error bg-red-50 px-2 py-1 rounded">
+                  <span className="text-2xl md:text-3xl font-bold text-primary">{formatPrice(currentSalePrice!)}</span>
+                  <span className="text-base md:text-lg text-text-secondary line-through">{formatPrice(currentPrice)}</span>
+                  <span className="text-xs md:text-sm font-bold text-error bg-red-50 px-2 py-1 rounded">
                     Save {formatPrice(currentPrice - currentSalePrice!)}
                   </span>
                 </>
               ) : (
-                <span className="text-3xl font-bold text-primary">{formatPrice(currentPrice)}</span>
+                <span className="text-2xl md:text-3xl font-bold text-primary">{formatPrice(currentPrice)}</span>
               )}
             </div>
 
@@ -217,18 +219,18 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Value Props */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-y border-border py-6 mb-8">
-              <div className="flex items-center gap-3">
-                <Truck className="text-accent shrink-0" size={24} />
-                <span className="text-sm font-medium">Free Delivery Nationwide</span>
+            <div className="grid grid-cols-3 gap-2 md:gap-4 border-y border-border py-4 md:py-6 mb-6 md:mb-8">
+              <div className="flex flex-col md:flex-row items-center md:items-center gap-1 md:gap-3 text-center md:text-left">
+                <Truck className="text-accent shrink-0" size={20} />
+                <span className="text-xs md:text-sm font-medium">Free Delivery Nationwide</span>
               </div>
-              <div className="flex items-center gap-3">
-                <Shield className="text-accent shrink-0" size={24} />
-                <span className="text-sm font-medium">Up to 5 Years Warranty</span>
+              <div className="flex flex-col md:flex-row items-center md:items-center gap-1 md:gap-3 text-center md:text-left">
+                <Shield className="text-accent shrink-0" size={20} />
+                <span className="text-xs md:text-sm font-medium">Up to 5 Years Warranty</span>
               </div>
-              <div className="flex items-center gap-3">
-                <RotateCcw className="text-accent shrink-0" size={24} />
-                <span className="text-sm font-medium">100 Nights Trial</span>
+              <div className="flex flex-col md:flex-row items-center md:items-center gap-1 md:gap-3 text-center md:text-left">
+                <RotateCcw className="text-accent shrink-0" size={20} />
+                <span className="text-xs md:text-sm font-medium">100 Nights Trial</span>
               </div>
             </div>
 

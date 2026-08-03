@@ -25,15 +25,15 @@ export const PromoStrip = () => {
   }, []);
 
   return (
-    <div className="bg-accent text-white py-2.5 px-4 text-center">
-      <p className="text-sm font-medium flex items-center justify-center gap-2 flex-wrap">
-        <span>{promoText}</span>
+    <div className="bg-accent text-white py-2 px-3 md:py-2.5 md:px-4 text-center">
+      <p className="text-xs md:text-sm font-medium flex items-center justify-center gap-1.5 md:gap-2 flex-wrap leading-snug">
+        <span className="text-center">{promoText}</span>
         {couponCode && (
-          <span>
-            Use code: <span className="font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded">{couponCode}</span>
+          <span className="shrink-0">
+            Code: <span className="font-bold uppercase tracking-wider bg-white/20 px-1.5 py-0.5 rounded">{couponCode}</span>
           </span>
         )}
-        <Link href="/products" className="underline font-semibold hover:text-primary transition-colors ml-1">
+        <Link href="/products" className="underline font-semibold hover:text-primary transition-colors shrink-0">
           Shop Now →
         </Link>
       </p>

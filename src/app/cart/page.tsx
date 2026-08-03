@@ -86,12 +86,12 @@ export default function CartPage() {
   return (
     <div className="bg-gray-50 min-h-screen py-8 md:py-12">
       <div className="container max-w-6xl">
-        <div className="flex items-center gap-2 mb-8">
-          <Link href="/products" className="text-text-secondary hover:text-primary transition-colors">
+        <div className="flex items-center gap-2 mb-6 md:mb-8 overflow-hidden">
+          <Link href="/products" className="text-text-secondary hover:text-primary transition-colors shrink-0">
             <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-3xl font-playfair font-bold text-primary">Shopping Cart</h1>
-          <span className="text-text-secondary font-medium bg-gray-200 px-3 py-1 rounded-full text-sm">
+          <h1 className="text-2xl md:text-3xl font-playfair font-bold text-primary truncate">Shopping Cart</h1>
+          <span className="text-text-secondary font-medium bg-gray-200 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm shrink-0">
             {itemCount} Items
           </span>
         </div>

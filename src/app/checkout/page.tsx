@@ -135,15 +135,15 @@ export default function CheckoutPage() {
   return (
     <div className="bg-gray-50 min-h-screen py-8 md:py-12">
       <div className="container max-w-5xl">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6 md:mb-8 gap-4">
           <div className="flex items-center gap-2">
-            <Link href="/cart" className="text-text-secondary hover:text-primary transition-colors">
+            <Link href="/cart" className="text-text-secondary hover:text-primary transition-colors shrink-0">
               <ArrowLeft size={20} />
             </Link>
-            <h1 className="text-3xl font-playfair font-bold text-primary">Checkout</h1>
+            <h1 className="text-2xl md:text-3xl font-playfair font-bold text-primary">Checkout</h1>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-text-secondary text-sm">
-            <Lock size={16} className="text-green-600" />
+          <div className="hidden sm:flex items-center gap-2 text-text-secondary text-xs md:text-sm shrink-0">
+            <Lock size={14} className="text-green-600" />
             <span>Secure SSL Encrypted checkout</span>
           </div>
         </div>
@@ -154,7 +154,7 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col-reverse lg:flex-row gap-6 md:gap-8">
           {/* Main Checkout Flow */}
           <div className="w-full lg:w-2/3 space-y-6">
 
