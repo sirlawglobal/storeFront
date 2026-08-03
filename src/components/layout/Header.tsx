@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, User, Menu, Heart, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Heart, ChevronDown, Grid } from 'lucide-react';
 import { useCartStore } from '@/store/cart.store';
 import { useAuthStore } from '@/store/auth.store';
 import { Button } from '../ui/Button';
@@ -15,12 +15,14 @@ interface CategoryItem {
   _id: string;
   name: string;
   slug: string;
+  description?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   const { itemCount, openCart } = useCartStore();
   const { isLoggedIn, user } = useAuthStore();
   const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -38,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-border shadow-xs">
       <div className="container mx-auto h-16 flex items-center justify-between">
         {/* Mobile Menu Button */}
         <button
@@ -56,56 +58,93 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/products" className="text-sm font-medium hover:text-primary transition-colors">
+        <nav className="hidden md:flex items-center gap-8">
+          <Link
+            href="/products"
+            className="text-sm font-medium hover:text-primary transition-colors text-text-primary"
+          >
             All Products
           </Link>
 
-          {/* Dynamic Categories Dropdown or Items */}
-          {categories.length > 0 ? (
-            <>
-              {categories.slice(0, 4).map((cat) => (
-                <Link
-                  key={cat._id}
-                  href={`/products?category=${cat.slug}`}
-                  className="text-sm font-medium hover:text-primary transition-colors capitalize"
-                >
-                  {cat.name}
-                </Link>
-              ))}
+          {/* Categories Dropdown */}
+          <div
+            className="relative group"
+            onMouseEnter={() => setIsCategoryDropdownOpen(true)}
+            onMouseLeave={() => setIsCategoryDropdownOpen(false)}
+          >
+            <button
+              onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+              className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1.5 py-2 text-text-primary cursor-pointer"
+            >
+              <span>Categories</span>
+              <ChevronDown
+                size={15}
+                className={`transition-transform duration-200 ${
+                  isCategoryDropdownOpen ? 'rotate-180 text-primary' : 'text-gray-400'
+                }`}
+              />
+            </button>
 
-              {categories.length > 4 && (
-                <div className="relative group">
-                  <button className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1 py-2">
-                    More Categories <ChevronDown size={14} />
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-border rounded-xl shadow-lg p-2 hidden group-hover:block max-h-80 overflow-y-auto custom-scrollbar z-50">
-                    {categories.slice(4).map((cat) => (
-                      <Link
-                        key={cat._id}
-                        href={`/products?category=${cat.slug}`}
-                        className="block px-3 py-2 text-sm text-text-primary hover:bg-gray-50 rounded-lg transition-colors capitalize"
-                      >
-                        {cat.name}
-                      </Link>
-                    ))}
-                  </div>
+            {/* Dropdown Menu */}
+            <div
+              className={`absolute top-full left-0 mt-1 w-64 bg-white border border-border rounded-2xl shadow-xl p-3 transition-all duration-200 z-50 ${
+                isCategoryDropdownOpen
+                  ? 'opacity-100 visible translate-y-0'
+                  : 'opacity-0 invisible -translate-y-2 pointer-events-none'
+              }`}
+            >
+              <div className="px-3 py-2 border-b border-border/60 mb-2 flex items-center gap-2">
+                <Grid size={15} className="text-primary" />
+                <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                  Shop By Category
+                </span>
+              </div>
+
+              {categories.length > 0 ? (
+                <div className="max-h-80 overflow-y-auto custom-scrollbar space-y-1">
+                  {categories.map((cat) => (
+                    <Link
+                      key={cat._id}
+                      href={`/products?category=${cat.slug}`}
+                      onClick={() => setIsCategoryDropdownOpen(false)}
+                      className="flex items-center justify-between px-3 py-2 text-sm font-medium text-text-primary hover:text-primary hover:bg-primary/5 rounded-xl transition-colors capitalize group/item"
+                    >
+                      <span>{cat.name}</span>
+                      <span className="text-xs text-gray-400 group-hover/item:text-primary transition-colors">
+                        →
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-3 text-center text-xs text-text-secondary">
+                  <p className="mb-2">No custom categories found</p>
+                  <Link
+                    href="/products"
+                    onClick={() => setIsCategoryDropdownOpen(false)}
+                    className="text-primary font-semibold hover:underline"
+                  >
+                    Browse All Products
+                  </Link>
                 </div>
               )}
-            </>
-          ) : (
-            <Link
-              href="/products?category=mattresses"
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              Mattresses
-            </Link>
-          )}
+
+              <div className="mt-2 pt-2 border-t border-border/60 text-center">
+                <Link
+                  href="/products"
+                  onClick={() => setIsCategoryDropdownOpen(false)}
+                  className="text-xs font-semibold text-primary hover:underline block py-1"
+                >
+                  View All Categories →
+                </Link>
+              </div>
+            </div>
+          </div>
 
           <Link href="/deals" className="text-sm font-medium text-accent hover:opacity-80 transition-opacity">
             Deals
           </Link>
-          <Link href="/sleep-quiz" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link href="/sleep-quiz" className="text-sm font-medium hover:text-primary transition-colors text-text-primary">
             Sleep Quiz
           </Link>
         </nav>
