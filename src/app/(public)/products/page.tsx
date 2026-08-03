@@ -1,12 +1,12 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ProductFilters } from '@/components/product/ProductFilters';
 import { ProductGrid } from '@/components/product/ProductGrid';
 import { api } from '@/lib/api';
 import { Product } from '@/types';
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,5 +62,13 @@ export default function ProductsPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }

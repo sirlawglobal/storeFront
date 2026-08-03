@@ -1,10 +1,10 @@
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 
-export default function VerifyOtpPage() {
+function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const identifier = searchParams.get('identifier') || '';
@@ -95,5 +95,13 @@ export default function VerifyOtpPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function VerifyOtpPage() {
+  return (
+    <Suspense fallback={null}>
+      <VerifyOtpForm />
+    </Suspense>
   );
 }
