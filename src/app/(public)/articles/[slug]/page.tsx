@@ -164,7 +164,7 @@ export default function ArticleDetailPage() {
         )}
 
         {/* Main Content */}
-        <article className="prose prose-base md:prose-lg max-w-none text-text-secondary">
+        <article className="prose-article w-full text-text-secondary">
           {article.content ? (
             <div
               dangerouslySetInnerHTML={{
