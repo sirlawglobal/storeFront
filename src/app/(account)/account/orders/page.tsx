@@ -42,7 +42,21 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    const init = async () => {
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('paymentRef') || urlParams.get('reference') || urlParams.get('trxref');
+        if (ref) {
+          try {
+            await api.payments.verify(ref);
+          } catch {
+            // ignore verification errors if already verified
+          }
+        }
+      }
+      fetchOrders();
+    };
+    init();
   }, []);
 
   return (

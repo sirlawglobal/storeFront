@@ -160,6 +160,14 @@ export const api = {
     }) => apiClient.post('/checkout/initiate', data),
   },
 
+  // ── Payments ──────────────────────────────────────────────────────────────
+  payments: {
+    verify: (reference: string) =>
+      apiClient.get(`/payments/verify/${reference}`),
+    initialize: (data: { checkoutRef: string; provider?: string }) =>
+      apiClient.post('/payments/initialize', data),
+  },
+
   // ── Orders ────────────────────────────────────────────────────────────────
   orders: {
     list: (params?: { page?: number; limit?: number }) =>
