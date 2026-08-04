@@ -118,11 +118,12 @@ export default function CheckoutPage() {
       });
 
       const data = res?.data ?? res;
+      const paymentUrl = data?.paymentUrl || res?.paymentUrl || res?.data?.paymentUrl;
       clearCart();
 
       // If backend provides a payment URL, redirect there; otherwise go to orders
-      if (data?.paymentUrl) {
-        window.location.href = data.paymentUrl;
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
       } else {
         router.push(`/account/orders/${data?.orderId || ''}`);
       }
