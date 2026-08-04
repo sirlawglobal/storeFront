@@ -165,7 +165,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
 
         {/* Action Icons */}
         <div className="flex items-center gap-2 md:gap-4">
-          <Link href="/search" className="p-2 text-text-primary hover:text-primary transition-colors hidden sm:block">
+          <Link href="/search" className="p-2 text-text-primary hover:text-primary transition-colors">
             <Search size={20} />
           </Link>
 

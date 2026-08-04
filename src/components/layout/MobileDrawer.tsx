@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { X, User, Heart, Settings, LogOut, ChevronRight } from 'lucide-react';
+import { X, User, Heart, Settings, LogOut, ChevronRight, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { Button } from '../ui/Button';
 import { api } from '@/lib/api';
@@ -99,6 +99,20 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
 
           <nav className="p-2">
             <ul className="space-y-1">
+              <li>
+                <Link
+                  href="/search"
+                  onClick={onClose}
+                  className="flex items-center justify-between p-3 rounded-md hover:bg-gray-50 text-primary font-medium bg-primary/5"
+                >
+                  <span className="flex items-center gap-2">
+                    <Search size={18} className="text-primary" />
+                    Search Products
+                  </span>
+                  <ChevronRight size={16} className="text-primary" />
+                </Link>
+              </li>
+
               <li>
                 <Link
                   href="/products"
