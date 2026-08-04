@@ -37,11 +37,19 @@ export interface Order {
   _id: string;
   orderNumber: string;
   status: string;
+  orderStatus?: string;
   items: OrderItem[];
   subtotal: number;
   totalDiscount: number;
   taxAmount: number;
   totalAmount: number;
+  paymentSummary?: {
+    subTotal?: number;
+    discountAmount?: number;
+    taxAmount?: number;
+    totalAmount?: number;
+    shippingFee?: number;
+  };
   shippingAddress?: Address;
   paymentMethod?: string;
   createdAt: string;
