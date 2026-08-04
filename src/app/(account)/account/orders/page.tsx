@@ -31,9 +31,9 @@ export default function OrdersPage() {
     setError('');
     try {
       const res: any = await api.orders.list({ page: 1, limit: 20 });
-      // Backend returns paginated: { data: Order[], meta: {...} } OR flat Order[]
-      const list = res?.data ?? res;
-      setOrders(Array.isArray(list) ? list : []);
+      // Backend returns { items: Order[], total: number } OR { data: { items: Order[] } } OR flat Order[]
+      const rawList = res?.items ?? res?.data?.items ?? res?.data ?? res;
+      setOrders(Array.isArray(rawList) ? rawList : []);
     } catch (err: any) {
       setError(err.message || 'Failed to load orders');
     } finally {
@@ -96,36 +96,49 @@ export default function OrdersPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {orders.map((order) => (
-            <Link
-              key={order._id}
-              href={`/account/orders/${order._id}`}
-              className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border border-border rounded-xl hover:border-primary/50 transition-colors group"
-            >
-              <div className="mb-3 sm:mb-0">
-                <div className="flex items-center gap-3 mb-1">
-                  <span className="font-bold">{order.orderNumber || order._id}</span>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
-                      STATUS_STYLES[order.status] || 'bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    {formatStatus(order.status)}
-                  </span>
-                </div>
-                <p className="text-sm text-text-secondary">
-                  Placed on {new Date(order.createdAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  {' • '}
-                  {order.items.length} item{order.items.length > 1 ? 's' : ''}
-                </p>
-              </div>
+          {orders.map((order: any) => {
+            const statusKey = (order.orderStatus || order.status || 'pending').toLowerCase();
+            const total = order.paymentSummary?.totalAmount ?? order.totalAmount ?? 0;
+            const itemsCount = order.items?.length || 0;
 
-              <div className="flex items-center w-full sm:w-auto justify-between sm:justify-end gap-6 border-t sm:border-0 border-border pt-3 sm:pt-0">
-                <span className="font-bold text-lg">{formatPrice(order.totalAmount)}</span>
-                <ChevronRight size={20} className="text-gray-400 group-hover:text-primary transition-colors" />
-              </div>
-            </Link>
-          ))}
+            return (
+              <Link
+                key={order._id}
+                href={`/account/orders/${order._id}`}
+                className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border border-border rounded-xl hover:border-primary/50 transition-colors group"
+              >
+                <div className="mb-3 sm:mb-0">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="font-bold">{order.orderNumber || order._id}</span>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
+                        STATUS_STYLES[statusKey] || 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {formatStatus(statusKey)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-secondary">
+                    Placed on{' '}
+                    {order.createdAt
+                      ? new Date(order.createdAt).toLocaleDateString('en-NG', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      : 'N/A'}
+                    {' • '}
+                    {itemsCount} item{itemsCount > 1 ? 's' : ''}
+                  </p>
+                </div>
+
+                <div className="flex items-center w-full sm:w-auto justify-between sm:justify-end gap-6 border-t sm:border-0 border-border pt-3 sm:pt-0">
+                  <span className="font-bold text-lg">{formatPrice(total)}</span>
+                  <ChevronRight size={20} className="text-gray-400 group-hover:text-primary transition-colors" />
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

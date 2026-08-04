@@ -111,8 +111,14 @@ export default function OrderDetailPage() {
     );
   }
 
-  const statusInfo = STATUS_STYLES[order.status] || STATUS_STYLES.pending;
-  const isCancellable = ['pending', 'confirmed'].includes(order.status);
+  const statusKey = (order.orderStatus || order.status || 'pending').toLowerCase();
+  const statusInfo = STATUS_STYLES[statusKey] || STATUS_STYLES.pending;
+  const isCancellable = ['pending', 'confirmed'].includes(statusKey);
+
+  const subtotal = order.paymentSummary?.subTotal ?? order.subtotal ?? 0;
+  const discount = order.paymentSummary?.discountAmount ?? order.totalDiscount ?? 0;
+  const tax = order.paymentSummary?.taxAmount ?? order.taxAmount ?? 0;
+  const total = order.paymentSummary?.totalAmount ?? order.totalAmount ?? 0;
 
   return (
     <div className="space-y-6">
@@ -131,19 +137,19 @@ export default function OrderDetailPage() {
             </h1>
             <p className="text-sm text-text-secondary mt-1">
               Placed on{' '}
-              {new Date(order.createdAt).toLocaleDateString('en-NG', {
+              {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-NG', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
-              })}
+              }) : 'N/A'}
             </p>
           </div>
           <span
             className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full border ${statusInfo.color}`}
           >
             {statusInfo.icon}
-            {formatStatus(order.status)}
+            {formatStatus(statusKey)}
           </span>
         </div>
 
@@ -166,51 +172,54 @@ export default function OrderDetailPage() {
       <div className="bg-white rounded-xl shadow-sm border border-border p-6 md:p-8">
         <h2 className="font-semibold text-lg mb-4 pb-3 border-b border-border">Items Ordered</h2>
         <div className="space-y-4">
-          {order.items.map((item, idx) => (
-            <div key={idx} className="flex gap-4">
-              <div className="w-16 h-16 bg-gray-100 rounded-lg border border-border overflow-hidden shrink-0 flex items-center justify-center">
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                ) : (
-                  <Package size={24} className="text-gray-300" />
-                )}
+          {order.items?.map((item: any, idx: number) => {
+            const img = item.primaryImage || item.image;
+            return (
+              <div key={idx} className="flex gap-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-lg border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                  {img ? (
+                    <img src={img} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package size={24} className="text-gray-300" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-text-primary">{item.name}</p>
+                  {item.variantName && (
+                    <p className="text-xs text-text-secondary">{item.variantName}</p>
+                  )}
+                  <p className="text-xs text-text-secondary">SKU: {item.sku}</p>
+                  <p className="text-sm mt-1">
+                    {formatPrice(item.price)} × {item.quantity}
+                  </p>
+                </div>
+                <div className="text-right font-bold">
+                  {formatPrice(item.price * item.quantity)}
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-medium text-text-primary">{item.name}</p>
-                {item.variantName && (
-                  <p className="text-xs text-text-secondary">{item.variantName}</p>
-                )}
-                <p className="text-xs text-text-secondary">SKU: {item.sku}</p>
-                <p className="text-sm mt-1">
-                  {formatPrice(item.price)} × {item.quantity}
-                </p>
-              </div>
-              <div className="text-right font-bold">
-                {formatPrice(item.price * item.quantity)}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Totals */}
         <div className="mt-6 pt-4 border-t border-border space-y-2 text-sm">
           <div className="flex justify-between text-text-secondary">
             <span>Subtotal</span>
-            <span>{formatPrice(order.subtotal)}</span>
+            <span>{formatPrice(subtotal)}</span>
           </div>
-          {order.totalDiscount > 0 && (
+          {discount > 0 && (
             <div className="flex justify-between text-success">
               <span>Discount</span>
-              <span>-{formatPrice(order.totalDiscount)}</span>
+              <span>-{formatPrice(discount)}</span>
             </div>
           )}
           <div className="flex justify-between text-text-secondary">
             <span>Estimated Tax</span>
-            <span>{formatPrice(order.taxAmount)}</span>
+            <span>{formatPrice(tax)}</span>
           </div>
           <div className="flex justify-between font-bold text-base pt-2 border-t border-border">
             <span>Total</span>
-            <span className="text-primary">{formatPrice(order.totalAmount)}</span>
+            <span className="text-primary">{formatPrice(total)}</span>
           </div>
         </div>
       </div>
