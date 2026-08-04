@@ -20,7 +20,10 @@ function ProductsPageContent() {
         
         // Build query params
         const params: any = { limit: 20 };
-        if (category) params.category = category;
+        if (category) {
+          params.category = category;
+          params.categorySlug = category;
+        }
         if (price) {
           const [min, max] = price.split('-');
           params.minPrice = min;

@@ -52,8 +52,9 @@ function SearchPageContent() {
       setIsLoading(true);
       setHasSearched(true);
       try {
-        const response = await api.products.list({ search: debouncedQuery, limit: 20 });
-        setProducts(response.data as Product[]);
+        const response: any = await api.products.list({ search: debouncedQuery, q: debouncedQuery, limit: 20 });
+        const list = response?.items ?? response?.data?.items ?? response?.data ?? response;
+        setProducts(Array.isArray(list) ? list : []);
       } catch (error) {
         console.error('Search failed:', error);
       } finally {

@@ -19,8 +19,9 @@ export default function CategoryPage() {
     const fetchProducts = async () => {
       setIsLoading(true);
       try {
-        const response = await api.products.list({ category: slug, limit: 20 });
-        setProducts(response.data as Product[]);
+        const response: any = await api.products.list({ category: slug, categorySlug: slug, limit: 20 });
+        const list = response?.items ?? response?.data?.items ?? response?.data ?? response;
+        setProducts(Array.isArray(list) ? list : []);
       } catch (error) {
         console.error('Failed to fetch category products:', error);
       } finally {
