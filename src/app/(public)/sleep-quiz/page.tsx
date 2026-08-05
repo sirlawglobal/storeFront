@@ -46,7 +46,7 @@ export default function SleepQuizPage() {
               id: q.id || q._id,
               title: q.label || q.title || 'Sleep Preference',
               options: opts.map((o: string) => String(o).charAt(0).toUpperCase() + String(o).slice(1)),
-              type: q.type || (opts.length > 0 ? 'select' : 'text'),
+              type: opts.length === 0 ? 'text' : (q.type || 'select'),
             };
           });
           setQuestions(normalized);
@@ -167,7 +167,7 @@ export default function SleepQuizPage() {
               </h2>
             </div>
 
-            {currentQuestion.type === 'text' ? (
+            {currentQuestion.type === 'text' || currentQuestion.options.length === 0 ? (
               <div className="space-y-4 mb-10">
                 <textarea
                   value={answers[currentQuestion.id] || ''}
