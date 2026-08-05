@@ -17,7 +17,6 @@ export default function CheckoutPage() {
   const { isLoggedIn, _hasHydrated, user } = useAuthStore();
   const { cart, setCart, clearCart } = useCartStore();
 
-  const [step, setStep] = useState(1);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('paystack');
@@ -179,139 +178,85 @@ export default function CheckoutPage() {
           {/* Main Checkout Flow */}
           <div className="w-full lg:w-2/3 space-y-6">
 
-            {/* Step 1: Delivery Address */}
-            <div className={`bg-white rounded-2xl shadow-sm border ${step === 1 ? 'border-primary shadow-md' : 'border-border'} p-6`}>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-playfair font-bold flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-primary text-white text-sm flex items-center justify-center">1</span>
-                  Delivery Address
-                </h2>
-                {step > 1 && (
-                  <button onClick={() => setStep(1)} className="text-primary text-sm font-medium hover:underline">Edit</button>
-                )}
-              </div>
+            {/* Delivery Address Selection */}
+            <div className="bg-white rounded-2xl shadow-sm border border-border p-6 space-y-4">
+              <h2 className="text-xl font-playfair font-bold flex items-center gap-2 pb-2 border-b border-border">
+                <MapPin className="text-primary" size={22} />
+                Delivery Address & Verification
+              </h2>
 
-              {step === 1 ? (
-                <div className="space-y-4">
-                  {isLoadingAddresses ? (
-                    <div className="space-y-3">
-                      {[1, 2].map((i) => (
-                        <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
-                      ))}
-                    </div>
-                  ) : addresses.length === 0 ? (
-                    <div className="text-center py-8 text-text-secondary">
-                      <MapPin size={32} className="mx-auto text-gray-300 mb-3" />
-                      <p className="mb-3">You have no saved addresses.</p>
-                      <Link href="/account/addresses" className="text-primary font-medium hover:underline">
-                        Add an address
-                      </Link>
-                    </div>
-                  ) : (
-                    addresses.map((addr) => (
-                      <label
-                        key={addr._id}
-                        className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
-                          selectedAddressId === addr._id
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:bg-gray-50'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="address"
-                          checked={selectedAddressId === addr._id}
-                          onChange={() => setSelectedAddressId(addr._id)}
-                          className="mt-1 accent-primary"
-                        />
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold">{addr.label}</span>
-                            {addr.isDefault && (
-                              <span className="bg-gray-200 text-xs px-2 py-0.5 rounded font-medium">Default</span>
-                            )}
-                          </div>
-                          <p className="text-sm text-text-secondary">{addr.street}</p>
-                          <p className="text-sm text-text-secondary">{addr.city}, {addr.state}</p>
-                        </div>
-                      </label>
-                    ))
-                  )}
-
-                  <Link href="/account/addresses" className="flex items-center gap-2 text-primary text-sm font-medium hover:underline pt-2">
-                    <Plus size={16} /> Add new address
+              {isLoadingAddresses ? (
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
+                  ))}
+                </div>
+              ) : addresses.length === 0 ? (
+                <div className="text-center py-8 text-text-secondary">
+                  <MapPin size={32} className="mx-auto text-gray-300 mb-3" />
+                  <p className="mb-3">You have no saved addresses.</p>
+                  <Link href="/account/addresses" className="text-primary font-medium hover:underline">
+                    Add an address
                   </Link>
-
-                  <div className="pt-4 flex justify-end">
-                    <Button
-                      onClick={() => setStep(2)}
-                      disabled={!selectedAddressId}
-                    >
-                      Continue to Payment
-                    </Button>
-                  </div>
                 </div>
-              ) : selectedAddress ? (
-                <div className="text-text-secondary text-sm flex items-start gap-3">
-                  <MapPin size={18} className="text-primary shrink-0" />
-                  <div>
-                    <p className="font-medium text-text-primary">{selectedAddress.label}</p>
-                    <p>{selectedAddress.street}</p>
-                    <p>{selectedAddress.city}, {selectedAddress.state}</p>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {/* Step 2: Payment Method */}
-            <div className={`bg-white rounded-2xl shadow-sm border ${step === 2 ? 'border-primary shadow-md' : 'border-border opacity-60'} p-6`}>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-playfair font-bold flex items-center gap-2">
-                  <span className={`w-6 h-6 rounded-full text-sm flex items-center justify-center ${step === 2 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}`}>2</span>
-                  Payment Method
-                </h2>
-              </div>
-
-              {step === 2 && (
-                <div className="space-y-4">
-                  {availableProviders.map((method) => (
+              ) : (
+                <div className="space-y-3">
+                  {addresses.map((addr) => (
                     <label
-                      key={method}
-                      className="flex items-center justify-between p-4 rounded-xl border border-primary bg-primary/5 cursor-pointer transition-colors"
+                      key={addr._id}
+                      className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                        selectedAddressId === addr._id
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border hover:bg-gray-50'
+                      }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="payment"
-                          checked={true}
-                          readOnly
-                          className="accent-primary"
-                        />
-                        <div className="flex flex-col">
-                          <span className="font-bold text-base capitalize">{method} Gateway</span>
-                          <span className="text-xs text-text-secondary">Official Store Payment Provider</span>
+                      <input
+                        type="radio"
+                        name="address"
+                        checked={selectedAddressId === addr._id}
+                        onChange={() => setSelectedAddressId(addr._id)}
+                        className="mt-1 accent-primary"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold">{addr.label}</span>
+                          {addr.isDefault && (
+                            <span className="bg-gray-200 text-xs px-2 py-0.5 rounded font-medium">Default</span>
+                          )}
                         </div>
+                        <p className="text-sm text-text-secondary">{addr.street}</p>
+                        <p className="text-sm text-text-secondary">{addr.city}, {addr.state}</p>
                       </div>
-                      <CreditCard size={20} className="text-primary" />
                     </label>
                   ))}
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Order Notes (optional)</label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      className="input-base resize-none h-20"
-                      placeholder="e.g. Please call before delivery"
-                    />
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mt-4 text-sm text-blue-800 flex gap-2">
-                    <ShieldCheck className="shrink-0 text-blue-600" size={20} />
-                    You will be redirected to the secure payment gateway to complete your purchase.
-                  </div>
                 </div>
               )}
+
+              <Link href="/account/addresses" className="flex items-center gap-2 text-primary text-sm font-medium hover:underline pt-2">
+                <Plus size={16} /> Add new address
+              </Link>
+            </div>
+
+            {/* Order Notes (Optional) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-border p-6 space-y-3">
+              <label className="block font-medium text-base">Delivery Instructions / Order Notes (optional)</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="input-base resize-none h-24"
+                placeholder="e.g. Call before arrival or leave with security"
+              />
+            </div>
+
+            {/* Security Guarantee Notice */}
+            <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl text-sm text-blue-900 flex items-center gap-3">
+              <ShieldCheck className="shrink-0 text-blue-600" size={24} />
+              <div>
+                <p className="font-semibold">Direct Encrypted Checkout</p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  Clicking Proceed to Payment will verify your order and redirect you directly to complete your payment securely.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -320,10 +265,10 @@ export default function CheckoutPage() {
             <div className="bg-white rounded-2xl shadow-sm border border-border p-6 sticky top-24">
               <h2 className="text-xl font-playfair font-bold mb-4 border-b border-border pb-4">Order Summary</h2>
 
-              <div className="space-y-4 mb-6">
+              <div className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-1">
                 {cart.items.map((item) => (
                   <div key={item.sku} className="flex gap-3">
-                    <div className="w-16 h-16 bg-gray-100 rounded border border-border overflow-hidden shrink-0">
+                    <div className="w-14 h-14 bg-gray-100 rounded border border-border overflow-hidden shrink-0">
                       {item.image && (
                         <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                       )}
@@ -403,12 +348,12 @@ export default function CheckoutPage() {
 
               <Button
                 size="lg"
-                className="w-full shadow-md text-lg"
+                className="w-full shadow-md text-lg font-bold py-3.5"
                 onClick={handlePlaceOrder}
-                disabled={step !== 2 || !selectedAddressId}
+                disabled={!selectedAddressId}
                 isLoading={isLoading}
               >
-                Pay Now
+                Proceed to Payment
               </Button>
             </div>
           </div>
