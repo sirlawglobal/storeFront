@@ -11,13 +11,14 @@ interface QuizQuestion {
   id: string;
   title: string;
   options: string[];
+  type?: string;
 }
 
 const FALLBACK_QUESTIONS: QuizQuestion[] = [
-  { id: 'sleepingPosition', title: 'What is your primary sleeping position?', options: ['Side', 'Back', 'Stomach', 'Combination'] },
-  { id: 'hasBackPain', title: 'Do you experience any back or neck pain?', options: ['Yes', 'No'] },
-  { id: 'temperaturePreference', title: 'How do you sleep temperature-wise?', options: ['Cool', 'Neutral', 'Warm'] },
-  { id: 'preferredFirmness', title: 'What is your preferred mattress feel?', options: ['Soft', 'Medium', 'Firm', 'Extra-Firm'] },
+  { id: 'sleepingPosition', title: 'What is your primary sleeping position?', options: ['Side', 'Back', 'Stomach', 'Combination'], type: 'select' },
+  { id: 'hasBackPain', title: 'Do you experience any back or neck pain?', options: ['Yes', 'No'], type: 'boolean' },
+  { id: 'temperaturePreference', title: 'How do you sleep temperature-wise?', options: ['Cool', 'Neutral', 'Warm'], type: 'select' },
+  { id: 'preferredFirmness', title: 'What is your preferred mattress feel?', options: ['Soft', 'Medium', 'Firm', 'Extra-Firm'], type: 'select' },
 ];
 
 export default function SleepQuizPage() {
@@ -41,11 +42,11 @@ export default function SleepQuizPage() {
           const normalized: QuizQuestion[] = list.map((q: any) => {
             let opts: string[] = q.options || [];
             if (q.type === 'boolean') opts = ['Yes', 'No'];
-            if (!opts.length) opts = ['Standard', 'Custom'];
             return {
               id: q.id || q._id,
               title: q.label || q.title || 'Sleep Preference',
               options: opts.map((o: string) => String(o).charAt(0).toUpperCase() + String(o).slice(1)),
+              type: q.type || (opts.length > 0 ? 'select' : 'text'),
             };
           });
           setQuestions(normalized);
@@ -166,24 +167,35 @@ export default function SleepQuizPage() {
               </h2>
             </div>
 
-            <div className="space-y-4 mb-10">
-              {currentQuestion.options.map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => handleSelect(currentQuestion.id, opt)}
-                  className={`w-full p-4 md:p-5 rounded-xl border-2 text-left font-medium transition-all cursor-pointer ${
-                    answers[currentQuestion.id] === opt
-                      ? 'border-primary bg-primary/5 text-primary font-semibold'
-                      : 'border-border text-text-secondary hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{opt}</span>
-                    {answers[currentQuestion.id] === opt && <CheckCircle2 size={20} />}
-                  </div>
-                </button>
-              ))}
-            </div>
+            {currentQuestion.type === 'text' ? (
+              <div className="space-y-4 mb-10">
+                <textarea
+                  value={answers[currentQuestion.id] || ''}
+                  onChange={(e) => handleSelect(currentQuestion.id, e.target.value)}
+                  className="w-full p-4 md:p-5 rounded-xl border-2 border-border focus:border-primary focus:outline-none min-h-[120px]"
+                  placeholder="Type your response here..."
+                />
+              </div>
+            ) : (
+              <div className="space-y-4 mb-10">
+                {currentQuestion.options.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => handleSelect(currentQuestion.id, opt)}
+                    className={`w-full p-4 md:p-5 rounded-xl border-2 text-left font-medium transition-all cursor-pointer ${
+                      answers[currentQuestion.id] === opt
+                        ? 'border-primary bg-primary/5 text-primary font-semibold'
+                        : 'border-border text-text-secondary hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{opt}</span>
+                      {answers[currentQuestion.id] === opt && <CheckCircle2 size={20} />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <Button
               className="w-full h-14 text-lg"
