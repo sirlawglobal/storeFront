@@ -67,6 +67,26 @@ export default function CheckoutPage() {
     }
   };
 
+  const [availableProviders, setAvailableProviders] = useState<PaymentMethod[]>(['paystack']);
+
+  // Fetch Active Gateway from Admin Settings
+  useEffect(() => {
+    const fetchActiveGateway = async () => {
+      try {
+        const res: any = await api.payments.getGateways();
+        const data = res?.data ?? res;
+        if (data?.defaultProvider) {
+          const active = data.defaultProvider.toLowerCase() as PaymentMethod;
+          setPaymentMethod(active);
+          setAvailableProviders([active]);
+        }
+      } catch {
+        // Fallback to paystack if API fails
+      }
+    };
+    fetchActiveGateway();
+  }, []);
+
   // Auth guard
   useEffect(() => {
     if (_hasHydrated && !isLoggedIn) {
@@ -254,24 +274,25 @@ export default function CheckoutPage() {
 
               {step === 2 && (
                 <div className="space-y-4">
-                  {(['paystack', 'flutterwave', 'moniepoint', 'opay'] as PaymentMethod[]).map((method) => (
+                  {availableProviders.map((method) => (
                     <label
                       key={method}
-                      className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${
-                        paymentMethod === method ? 'border-primary bg-primary/5' : 'border-border hover:bg-gray-50'
-                      }`}
+                      className="flex items-center justify-between p-4 rounded-xl border border-primary bg-primary/5 cursor-pointer transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <input
                           type="radio"
                           name="payment"
-                          checked={paymentMethod === method}
-                          onChange={() => setPaymentMethod(method)}
+                          checked={true}
+                          readOnly
                           className="accent-primary"
                         />
-                        <span className="font-medium capitalize">{method}</span>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-base capitalize">{method} Gateway</span>
+                          <span className="text-xs text-text-secondary">Official Store Payment Provider</span>
+                        </div>
                       </div>
-                      <CreditCard size={20} className="text-text-secondary" />
+                      <CreditCard size={20} className="text-primary" />
                     </label>
                   ))}
 

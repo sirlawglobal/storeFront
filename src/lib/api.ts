@@ -162,6 +162,7 @@ export const api = {
 
   // ── Payments ──────────────────────────────────────────────────────────────
   payments: {
+    getGateways: () => apiClient.get('/payments/gateways'),
     verify: (reference: string) =>
       apiClient.get(`/payments/verify/${reference}`),
     initialize: (data: { checkoutRef: string; provider?: string }) =>
