@@ -5,6 +5,7 @@ import { FeaturedCategories } from '@/components/home/FeaturedCategories';
 import { TrendingProducts } from '@/components/home/TrendingProducts';
 import { AIRecommendations } from '@/components/home/AIRecommendations';
 import { BlogPreview } from '@/components/home/BlogPreview';
+import { SleepQuizModal } from '@/components/home/SleepQuizModal';
 
 export default function HomePage() {
   return (
@@ -15,6 +16,7 @@ export default function HomePage() {
       <TrendingProducts />
       <AIRecommendations />
       <BlogPreview />
+      <SleepQuizModal />
     </>
   );
 }

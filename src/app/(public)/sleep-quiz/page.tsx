@@ -110,6 +110,9 @@ export default function SleepQuizPage() {
       } catch (err) {
         console.error('Failed to generate AI recommendations:', err);
       } finally {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('vita_sleep_quiz_dismissed', 'true');
+        }
         setIsSubmitting(false);
         setStep(questions.length + 2);
       }
