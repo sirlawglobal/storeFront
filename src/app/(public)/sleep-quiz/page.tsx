@@ -95,13 +95,31 @@ export default function SleepQuizPage() {
         let quizResult: any = null;
         try {
           const quizRes: any = await api.sleepQuiz.submit(answers);
-          quizResult = quizRes?.data ?? quizRes;
+          const initialData = quizRes?.data ?? quizRes;
+          const quizId = initialData?.quizId || initialData?._id;
+
+          if (quizId) {
+            // Poll for completion (up to 5 attempts, 1 second apart)
+            for (let i = 0; i < 5; i++) {
+              await new Promise((res) => setTimeout(res, 1000));
+              try {
+                const polled: any = await api.sleepQuiz.getResult(quizId);
+                const polledData = polled?.data ?? polled;
+                if (polledData?.status === 'completed') {
+                  quizResult = polledData;
+                  break;
+                }
+              } catch (e) {
+                // Ignore single polling error
+              }
+            }
+          }
         } catch (e) {
           console.warn('Backend sleep quiz submit fallback:', e);
         }
 
         // 2. Query real matching products directly from MongoDB database
-        const prodRes: any = await api.products.list({ limit: 12 });
+        const prodRes: any = await api.products.list({ limit: 20 });
         const prodData = prodRes?.data ?? prodRes;
         const productsList: Product[] = Array.isArray(prodData?.items)
           ? prodData.items
@@ -110,14 +128,43 @@ export default function SleepQuizPage() {
           : [];
 
         if (productsList.length > 0) {
-          let matched = productsList;
-          if (quizResult?.recommendedProducts && Array.isArray(quizResult.recommendedProducts)) {
-            const recommendedSkusOrIds = new Set(quizResult.recommendedProducts);
-            const found = productsList.filter(
-              (p) => recommendedSkusOrIds.has(p._id) || p.variants?.some((v) => recommendedSkusOrIds.has(v.sku))
-            );
-            if (found.length > 0) matched = found;
+          let matched: Product[] = [];
+
+          // Try matching by exact AI recommended SKUs
+          const targetSkus = new Set<string>();
+          if (quizResult?.bestMattressSku) targetSkus.add(quizResult.bestMattressSku);
+          if (Array.isArray(quizResult?.alternativeSkus)) {
+            quizResult.alternativeSkus.forEach((s: string) => targetSkus.add(s));
           }
+          if (Array.isArray(quizResult?.pillowSkus)) {
+            quizResult.pillowSkus.forEach((s: string) => targetSkus.add(s));
+          }
+
+          if (targetSkus.size > 0) {
+            matched = productsList.filter(
+              (p) => targetSkus.has(p._id) || p.variants?.some((v) => targetSkus.has(v.sku))
+            );
+          }
+
+          // Fallback matching based on user firmness/answers to ensure unique results
+          if (matched.length === 0) {
+            const desiredFirmness = String(answers.preferredFirmness || '').toLowerCase();
+            if (desiredFirmness) {
+              matched = productsList.filter((p) =>
+                p.name.toLowerCase().includes(desiredFirmness) ||
+                p.description?.toLowerCase().includes(desiredFirmness)
+              );
+            }
+          }
+
+          // Guaranteed unique fallback if still empty
+          if (matched.length === 0) {
+            // Hash answers to pick varied products instead of always top 4
+            const hash = Object.values(answers).join('').length;
+            const startIndex = hash % Math.max(1, productsList.length - 4);
+            matched = productsList.slice(startIndex, startIndex + 4);
+          }
+
           setRecommendations(matched.slice(0, 4));
         } else {
           setRecommendations([]);

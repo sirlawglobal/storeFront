@@ -8,14 +8,58 @@ export const AIRecommendations = () => {
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [subtitle, setSubtitle] = useState('Based on popular customer favorites.');
+
   useEffect(() => {
     const fetchRecs = async () => {
       setIsLoading(true);
       try {
-        const res: any = await api.recommendations.getPopular(3);
-        const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
-        if (Array.isArray(list)) {
-          setRecommendations(list);
+        let personalizedProducts: Product[] = [];
+
+        // 1. Try to fetch user's latest sleep quiz result from backend
+        try {
+          const quizRes: any = await api.sleepQuiz.getMyLatest();
+          const quizData = quizRes?.data ?? quizRes;
+          if (quizData && quizData.status === 'completed') {
+            const targetSkus = new Set<string>();
+            if (quizData.bestMattressSku) targetSkus.add(quizData.bestMattressSku);
+            if (Array.isArray(quizData.alternativeSkus)) {
+              quizData.alternativeSkus.forEach((s: string) => targetSkus.add(s));
+            }
+            if (Array.isArray(quizData.pillowSkus)) {
+              quizData.pillowSkus.forEach((s: string) => targetSkus.add(s));
+            }
+
+            if (targetSkus.size > 0) {
+              const prodRes: any = await api.products.list({ limit: 20 });
+              const prodData = prodRes?.data ?? prodRes;
+              const productsList: Product[] = Array.isArray(prodData?.items)
+                ? prodData.items
+                : Array.isArray(prodData)
+                ? prodData
+                : [];
+
+              personalizedProducts = productsList.filter(
+                (p) => targetSkus.has(p._id) || p.variants?.some((v) => targetSkus.has(v.sku))
+              );
+            }
+          }
+        } catch (e) {
+          // User not logged in or has no quiz history yet
+        }
+
+        // 2. If personalized products found, display them!
+        if (personalizedProducts.length > 0) {
+          setRecommendations(personalizedProducts.slice(0, 3));
+          setSubtitle('Tailored specifically to your sleep assessment profile.');
+        } else {
+          // 3. Fallback to popular recommendations
+          const res: any = await api.recommendations.getPopular(3);
+          const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
+          if (Array.isArray(list)) {
+            setRecommendations(list);
+          }
+          setSubtitle('Based on popular customer favorites.');
         }
       } catch (err) {
         console.error('Failed to load recommendations:', err);
@@ -41,7 +85,7 @@ export const AIRecommendations = () => {
               </span>
             </div>
             <h2 className="text-3xl font-playfair font-bold text-primary mb-2">Picked Just For You</h2>
-            <p className="text-text-secondary">Based on popular customer favorites.</p>
+            <p className="text-text-secondary">{subtitle}</p>
           </div>
         </div>
 
