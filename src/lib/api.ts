@@ -44,7 +44,11 @@ apiClient.interceptors.response.use(
         window.location.href = '/login';
       }
     }
-    return Promise.reject(error.response?.data || { message: error.message || 'An error occurred' });
+    const errorData = error.response?.data;
+    const backendMessage = errorData?.error?.message || errorData?.message;
+    return Promise.reject(
+      errorData?.error || { ...errorData, message: backendMessage || error.message || 'An error occurred' }
+    );
   }
 );
 
