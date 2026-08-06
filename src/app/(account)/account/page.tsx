@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth.store';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +14,33 @@ export default function ProfilePage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  // 1. Fetch fresh profile from backend DB on mount to ensure user.phone is up to date
+  useEffect(() => {
+    const fetchFreshProfile = async () => {
+      try {
+        const res: any = await api.users.getProfile();
+        const freshUser = res?.data ?? res;
+        if (freshUser && (freshUser.id || freshUser._id)) {
+          updateUser({ ...freshUser, _id: freshUser._id || freshUser.id });
+        }
+      } catch (err) {
+        console.warn('Failed to fetch fresh user profile:', err);
+      }
+    };
+    fetchFreshProfile();
+  }, [updateUser]);
+
+  // 2. Keep formData in sync whenever user object updates or edit mode is toggled
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phone: user.phone || '',
+      });
+    }
+  }, [user, isEditing]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
