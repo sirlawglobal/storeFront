@@ -16,44 +16,70 @@ export const AIRecommendations = () => {
       try {
         let personalizedProducts: Product[] = [];
 
-        // 1. Try to fetch user's latest sleep quiz result from backend
-        try {
-          const quizRes: any = await api.sleepQuiz.getMyLatest();
-          const quizData = quizRes?.data ?? quizRes;
-          if (quizData && quizData.status === 'completed') {
-            const targetSkus = new Set<string>();
-            if (quizData.bestMattressSku) targetSkus.add(quizData.bestMattressSku);
-            if (Array.isArray(quizData.alternativeSkus)) {
-              quizData.alternativeSkus.forEach((s: string) => targetSkus.add(s));
-            }
-            if (Array.isArray(quizData.pillowSkus)) {
-              quizData.pillowSkus.forEach((s: string) => targetSkus.add(s));
-            }
+        // 1. First check if localStorage has saved recommended product IDs (Works for Guests & Logged-in Users on this browser)
+        if (typeof window !== 'undefined') {
+          const cachedIdsStr = localStorage.getItem('vita_recommended_product_ids');
+          if (cachedIdsStr) {
+            try {
+              const cachedIds: string[] = JSON.parse(cachedIdsStr);
+              if (Array.isArray(cachedIds) && cachedIds.length > 0) {
+                const prodRes: any = await api.products.list({ limit: 20 });
+                const prodData = prodRes?.data ?? prodRes;
+                const productsList: Product[] = Array.isArray(prodData?.items)
+                  ? prodData.items
+                  : Array.isArray(prodData)
+                  ? prodData
+                  : [];
 
-            if (targetSkus.size > 0) {
-              const prodRes: any = await api.products.list({ limit: 20 });
-              const prodData = prodRes?.data ?? prodRes;
-              const productsList: Product[] = Array.isArray(prodData?.items)
-                ? prodData.items
-                : Array.isArray(prodData)
-                ? prodData
-                : [];
-
-              personalizedProducts = productsList.filter(
-                (p) => targetSkus.has(p._id) || p.variants?.some((v) => targetSkus.has(v.sku))
-              );
+                const cachedSet = new Set(cachedIds);
+                personalizedProducts = productsList.filter((p) => cachedSet.has(p._id));
+              }
+            } catch (e) {
+              console.warn('Failed parsing cached recommended product IDs:', e);
             }
           }
-        } catch (e) {
-          // User not logged in or has no quiz history yet
         }
 
-        // 2. If personalized products found, display them!
+        // 2. If no local storage cache, try fetching user's latest sleep quiz result from backend (For Logged-in users on new devices)
+        if (personalizedProducts.length === 0) {
+          try {
+            const quizRes: any = await api.sleepQuiz.getMyLatest();
+            const quizData = quizRes?.data ?? quizRes;
+            if (quizData && quizData.status === 'completed') {
+              const targetSkus = new Set<string>();
+              if (quizData.bestMattressSku) targetSkus.add(quizData.bestMattressSku);
+              if (Array.isArray(quizData.alternativeSkus)) {
+                quizData.alternativeSkus.forEach((s: string) => targetSkus.add(s));
+              }
+              if (Array.isArray(quizData.pillowSkus)) {
+                quizData.pillowSkus.forEach((s: string) => targetSkus.add(s));
+              }
+
+              if (targetSkus.size > 0) {
+                const prodRes: any = await api.products.list({ limit: 20 });
+                const prodData = prodRes?.data ?? prodRes;
+                const productsList: Product[] = Array.isArray(prodData?.items)
+                  ? prodData.items
+                  : Array.isArray(prodData)
+                  ? prodData
+                  : [];
+
+                personalizedProducts = productsList.filter(
+                  (p) => targetSkus.has(p._id) || p.variants?.some((v) => targetSkus.has(v.sku))
+                );
+              }
+            }
+          } catch (e) {
+            // User not logged in or has no quiz history yet
+          }
+        }
+
+        // 3. If personalized products found, display them!
         if (personalizedProducts.length > 0) {
           setRecommendations(personalizedProducts.slice(0, 3));
           setSubtitle('Tailored specifically to your sleep assessment profile.');
         } else {
-          // 3. Fallback to popular recommendations
+          // 4. Fallback to popular recommendations
           const res: any = await api.recommendations.getPopular(3);
           const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
           if (Array.isArray(list)) {

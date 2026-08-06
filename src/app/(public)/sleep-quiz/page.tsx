@@ -165,7 +165,13 @@ export default function SleepQuizPage() {
             matched = productsList.slice(startIndex, startIndex + 4);
           }
 
-          setRecommendations(matched.slice(0, 4));
+          const finalMatched = matched.slice(0, 4);
+          setRecommendations(finalMatched);
+
+          // Persist recommended product IDs to localStorage so AIRecommendations on Home Page can display them for guests & logged-in users alike
+          if (typeof window !== 'undefined' && finalMatched.length > 0) {
+            localStorage.setItem('vita_recommended_product_ids', JSON.stringify(finalMatched.map((p) => p._id)));
+          }
         } else {
           setRecommendations([]);
         }
