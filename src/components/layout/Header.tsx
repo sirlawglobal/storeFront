@@ -106,19 +106,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
               <span>Categories</span>
               <ChevronDown
                 size={15}
-                className={`transition-transform duration-200 ${
-                  isCategoryDropdownOpen ? 'rotate-180 text-primary' : 'text-gray-400'
-                }`}
+                className={`transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 text-primary' : 'text-gray-400'
+                  }`}
               />
             </button>
 
             {/* Seamless Dropdown Menu Wrapper (pt-2 acts as invisible hover bridge) */}
             <div
-              className={`absolute top-full left-0 pt-2 w-64 transition-all duration-200 z-50 ${
-                isCategoryDropdownOpen
-                  ? 'opacity-100 visible translate-y-0'
-                  : 'opacity-0 invisible -translate-y-2 pointer-events-none'
-              }`}
+              className={`absolute top-full left-0 pt-2 w-64 transition-all duration-200 z-50 ${isCategoryDropdownOpen
+                ? 'opacity-100 visible translate-y-0'
+                : 'opacity-0 invisible -translate-y-2 pointer-events-none'
+                }`}
             >
               <div className="bg-white border border-border rounded-2xl shadow-xl p-3">
                 <div className="px-3 py-2 border-b border-border/60 mb-2 flex items-center gap-2">
