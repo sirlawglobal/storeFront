@@ -42,6 +42,21 @@ export default function SleepQuizPage() {
           const normalized: QuizQuestion[] = list.map((q: any) => {
             let opts: string[] = q.options || [];
             if (q.type === 'boolean') opts = ['Yes', 'No'];
+            
+            // Smart auto-preset for numerical questions if options are not explicitly set
+            if (!opts.length) {
+              const labelLower = String(q.label || q.title || '').toLowerCase();
+              const idLower = String(q.id || '').toLowerCase();
+              
+              if (labelLower.includes('budget') || idLower.includes('budget')) {
+                opts = ['Under ₦100,000', '₦100,000 - ₦300,000', 'Above ₦300,000'];
+              } else if (labelLower.includes('age') || idLower.includes('age')) {
+                opts = ['Under 30 years', '30 - 50 years', 'Above 50 years'];
+              } else if (labelLower.includes('weight') || idLower.includes('weight')) {
+                opts = ['Under 60 kg (Light)', '60 - 90 kg (Average)', 'Over 90 kg (Heavy Duty)'];
+              }
+            }
+
             return {
               id: q.id || q._id,
               title: q.label || q.title || 'Sleep Preference',
