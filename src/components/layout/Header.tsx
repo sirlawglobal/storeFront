@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, User, Menu, Heart, ChevronDown, Grid } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Heart, ChevronDown, Grid, Bell } from 'lucide-react';
 import { useCartStore } from '@/store/cart.store';
 import { useAuthStore } from '@/store/auth.store';
 import { Button } from '../ui/Button';
@@ -25,6 +25,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -38,7 +40,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
       }
     };
     fetchCategories();
-  }, []);
+
+    if (isLoggedIn) {
+      const fetchUnread = async () => {
+        try {
+          const res: any = await api.notifications.getUnreadCount();
+          const count = res?.data?.count ?? res?.count ?? 0;
+          setUnreadNotifications(Number(count) || 0);
+        } catch (e) {
+          // ignore notification count fetch error
+        }
+      };
+      fetchUnread();
+    }
+  }, [isLoggedIn]);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -172,6 +187,21 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
           <Link href="/account/wishlist" className="p-2 text-text-primary hover:text-primary transition-colors hidden md:block">
             <Heart size={20} />
           </Link>
+
+          {isLoggedIn && (
+            <Link
+              href="/account/notifications"
+              className="p-2 text-text-primary hover:text-primary transition-colors relative"
+              title="Notifications"
+            >
+              <Bell size={20} />
+              {unreadNotifications > 0 && (
+                <span className="absolute top-1 right-1 bg-accent text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                </span>
+              )}
+            </Link>
+          )}
 
           {isLoggedIn ? (
             <Link
