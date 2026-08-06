@@ -23,7 +23,8 @@ export default function NotificationsPage() {
     setError('');
     try {
       const res: any = await api.notifications.list({ page: 1, limit: 20 });
-      const list = res?.data?.items ?? res?.data ?? res;
+      // The API wraps the response in { data: { data: [...] } }
+      const list = res?.data?.data ?? res?.data?.items ?? res?.data ?? res;
       setNotifications(Array.isArray(list) ? list : []);
     } catch (err: any) {
       setError(err.message || 'Failed to load notifications');

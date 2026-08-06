@@ -45,7 +45,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
       const fetchUnread = async () => {
         try {
           const res: any = await api.notifications.getUnreadCount();
-          const count = res?.data?.count ?? res?.count ?? 0;
+          // The API wraps the response in { data: { data: { count: X } } }
+          const count = res?.data?.data?.count ?? res?.data?.count ?? res?.count ?? 0;
           setUnreadNotifications(Number(count) || 0);
         } catch (e) {
           // ignore notification count fetch error
