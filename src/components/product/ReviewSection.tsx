@@ -109,16 +109,21 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
         </div>
 
         {isLoggedIn ? (
-          <Button variant="outline" onClick={() => setShowForm(!showForm)}>
-            {showForm ? 'Cancel Review' : 'Write a Review'}
-          </Button>
+          <div className="flex items-center gap-3">
+            <a
+              href="/account/orders"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-colors"
+            >
+              Review Delivered Orders →
+            </a>
+          </div>
         ) : (
-          <p className="text-sm text-text-secondary border p-3 rounded-md">
-            Please{' '}
-            <a href="/login" className="text-primary font-medium hover:underline">
-              sign in
+          <p className="text-xs text-text-secondary border border-border p-3 rounded-xl bg-gray-50">
+            Purchased this item?{' '}
+            <a href="/login" className="text-primary font-semibold hover:underline">
+              Sign in
             </a>{' '}
-            to leave a review.
+            and write a review from your <strong className="text-text-primary">Order History</strong> once delivered!
           </p>
         )}
       </div>

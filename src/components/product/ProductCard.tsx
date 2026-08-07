@@ -34,7 +34,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const salePrice = product.salePrice ?? product.variants?.[0]?.compareAtPrice;
   const isOnSale = !!salePrice && salePrice < basePrice;
 
-  const rating = product.averageRating ?? (product as any).rating ?? 0;
+  const reviewCount = product.reviewCount || 0;
+  const rating = reviewCount > 0 ? (product.averageRating ?? (product as any).rating ?? 0) : 0;
   const defaultSku = product.variants?.[0]?.sku || `SKU-${product._id}`;
 
   const handleToggleWishlist = async (e: React.MouseEvent) => {
@@ -124,9 +125,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       {/* Content */}
       <div className="p-3 md:p-4 flex flex-col flex-1">
         <div className="flex items-center gap-1 mb-1.5 md:mb-2">
-          <Star size={12} className="fill-accent text-accent" />
-          <span className="text-[11px] md:text-xs font-medium">{Number(rating).toFixed(1)}</span>
-          <span className="text-[11px] md:text-xs text-text-secondary">({product.reviewCount || 0})</span>
+          <Star size={12} className={reviewCount > 0 ? "fill-amber-400 text-amber-400" : "text-gray-300"} />
+          <span className="text-[11px] md:text-xs font-medium text-text-primary">{Number(rating).toFixed(1)}</span>
+          <span className="text-[11px] md:text-xs text-text-secondary">({reviewCount})</span>
         </div>
 
         <Link href={`/products/${product.slug}`}>

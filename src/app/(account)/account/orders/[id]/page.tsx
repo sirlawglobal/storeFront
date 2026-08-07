@@ -11,11 +11,13 @@ import {
   Clock,
   XCircle,
   Truck,
+  Star,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Order, OrderTracking } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { ReviewModal } from '@/components/product/ReviewModal';
 
 const STATUS_STYLES: Record<string, { color: string; icon: React.ReactNode }> = {
   pending: { color: 'text-yellow-600 bg-yellow-50 border-yellow-200', icon: <Clock size={16} /> },
@@ -41,6 +43,10 @@ export default function OrderDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState('');
+
+  // Review Modal state for delivered order items
+  const [reviewItem, setReviewItem] = useState<{ id: string; name: string; image?: string } | null>(null);
+  const [reviewedProductIds, setReviewedProductIds] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -174,27 +180,56 @@ export default function OrderDetailPage() {
         <div className="space-y-4">
           {order.items?.map((item: any, idx: number) => {
             const img = item.primaryImage || item.image;
+            const itemProdId = item.productId?._id || item.productId || item._id;
+            const isDelivered = statusKey === 'delivered';
+            const isReviewed = reviewedProductIds[itemProdId];
+
             return (
-              <div key={idx} className="flex gap-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-lg border border-border overflow-hidden shrink-0 flex items-center justify-center">
-                  {img ? (
-                    <img src={img} alt={item.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <Package size={24} className="text-gray-300" />
-                  )}
+              <div key={idx} className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-3 bg-gray-50/50 rounded-xl border border-border">
+                <div className="flex gap-4 items-center">
+                  <div className="w-16 h-16 bg-white rounded-lg border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                    {img ? (
+                      <img src={img} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Package size={24} className="text-gray-300" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-text-primary">{item.name}</p>
+                    {item.variantName && (
+                      <p className="text-xs text-text-secondary">{item.variantName}</p>
+                    )}
+                    <p className="text-xs text-text-secondary font-mono">SKU: {item.sku}</p>
+                    <p className="text-sm mt-0.5">
+                      {formatPrice(item.price)} × {item.quantity}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium text-text-primary">{item.name}</p>
-                  {item.variantName && (
-                    <p className="text-xs text-text-secondary">{item.variantName}</p>
+
+                <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-0 border-border pt-2 sm:pt-0">
+                  {isDelivered && (
+                    isReviewed ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
+                        <CheckCircle2 size={14} /> Review Submitted
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() =>
+                          setReviewItem({
+                            id: itemProdId,
+                            name: item.name,
+                            image: img,
+                          })
+                        }
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3.5 py-1.5 rounded-lg transition-colors"
+                      >
+                        <Star size={14} className="fill-amber-400 text-amber-400" /> Write a Review
+                      </button>
+                    )
                   )}
-                  <p className="text-xs text-text-secondary">SKU: {item.sku}</p>
-                  <p className="text-sm mt-1">
-                    {formatPrice(item.price)} × {item.quantity}
-                  </p>
-                </div>
-                <div className="text-right font-bold">
-                  {formatPrice(item.price * item.quantity)}
+                  <div className="text-right font-bold">
+                    {formatPrice(item.price * item.quantity)}
+                  </div>
                 </div>
               </div>
             );
@@ -282,6 +317,20 @@ export default function OrderDetailPage() {
             ))}
           </ol>
         </div>
+      )}
+
+      {/* Review Modal Dialog for Delivered Product Items */}
+      {reviewItem && (
+        <ReviewModal
+          isOpen={!!reviewItem}
+          onClose={() => setReviewItem(null)}
+          productId={reviewItem.id}
+          productName={reviewItem.name}
+          productImage={reviewItem.image}
+          onSuccess={() => {
+            setReviewedProductIds((prev) => ({ ...prev, [reviewItem.id]: true }));
+          }}
+        />
       )}
     </div>
   );
