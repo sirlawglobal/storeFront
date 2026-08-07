@@ -126,6 +126,41 @@ export default function OrderDetailPage() {
   const tax = order.paymentSummary?.taxAmount ?? order.taxAmount ?? 0;
   const total = order.paymentSummary?.totalAmount ?? order.totalAmount ?? 0;
 
+  const handleOpenReview = async (item: any) => {
+    let targetProdId = typeof item.productId === 'string'
+      ? item.productId
+      : item.productId?._id?.toString() || item.productId?.id?.toString();
+
+    // If productId is not a valid 24-character hex MongoId string, resolve via SKU from products catalog
+    if (!targetProdId || typeof targetProdId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(targetProdId)) {
+      try {
+        const res: any = await api.products.list({ limit: 100 });
+        const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
+        if (Array.isArray(list)) {
+          const matched = list.find((p: any) =>
+            p.variants?.some((v: any) => v.sku === item.sku) || p.sku === item.sku
+          );
+          if (matched) {
+            targetProdId = matched._id || matched.id;
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to resolve productId by SKU:', err);
+      }
+    }
+
+    if (!targetProdId || !/^[0-9a-fA-F]{24}$/.test(targetProdId)) {
+      alert('Could not resolve product ID for this item. Please try again.');
+      return;
+    }
+
+    setReviewItem({
+      id: targetProdId,
+      name: item.name,
+      image: item.primaryImage || item.image,
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -182,7 +217,7 @@ export default function OrderDetailPage() {
             const img = item.primaryImage || item.image;
             const itemProdId = item.productId?._id || item.productId || item._id;
             const isDelivered = statusKey === 'delivered';
-            const isReviewed = reviewedProductIds[itemProdId];
+            const isReviewed = itemProdId && reviewedProductIds[itemProdId];
 
             return (
               <div key={idx} className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-3 bg-gray-50/50 rounded-xl border border-border">
@@ -214,13 +249,7 @@ export default function OrderDetailPage() {
                       </span>
                     ) : (
                       <button
-                        onClick={() =>
-                          setReviewItem({
-                            id: itemProdId,
-                            name: item.name,
-                            image: img,
-                          })
-                        }
+                        onClick={() => handleOpenReview(item)}
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3.5 py-1.5 rounded-lg transition-colors"
                       >
                         <Star size={14} className="fill-amber-400 text-amber-400" /> Write a Review
