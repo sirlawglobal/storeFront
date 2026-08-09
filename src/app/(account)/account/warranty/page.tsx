@@ -40,7 +40,7 @@ export default function WarrantyPage() {
     setError('');
     try {
       const res: any = await api.warranty.list();
-      const list = res?.data?.items ?? res?.data ?? res;
+      const list = res?.data?.data ?? res?.data?.items ?? res?.data ?? res;
       setWarranties(Array.isArray(list) ? list : []);
     } catch (err: any) {
       setError(err.message || 'Failed to load registered warranties');
