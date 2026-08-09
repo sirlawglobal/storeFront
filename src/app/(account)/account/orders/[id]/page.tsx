@@ -179,7 +179,7 @@ export default function OrderDetailPage() {
     }
 
     if (!targetProdId || !/^[0-9a-fA-F]{24}$/.test(targetProdId)) {
-      alert('Could not resolve product ID for this item. Please try again.');
+      alert('This product is no longer available in our catalog and cannot be reviewed.');
       return;
     }
 
