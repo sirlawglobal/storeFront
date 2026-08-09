@@ -45,7 +45,7 @@ export default function OrderDetailPage() {
   const [error, setError] = useState('');
 
   // Review Modal state for delivered order items
-  const [reviewItem, setReviewItem] = useState<{ id: string; name: string; image?: string } | null>(null);
+  const [reviewItem, setReviewItem] = useState<{ id: string; name: string; image?: string; sku?: string } | null>(null);
   const [reviewedProductIds, setReviewedProductIds] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -129,19 +129,43 @@ export default function OrderDetailPage() {
   const handleOpenReview = async (item: any) => {
     let targetProdId = typeof item.productId === 'string'
       ? item.productId
-      : item.productId?._id?.toString() || item.productId?.id?.toString();
+      : item.productId?._id?.toString() || item.productId?.id?.toString() || (typeof item.productId?.toString === 'function' ? item.productId.toString() : undefined);
 
     // If productId is not a valid 24-character hex MongoId string, resolve via SKU from products catalog
     if (!targetProdId || typeof targetProdId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(targetProdId)) {
       try {
-        const res: any = await api.products.list({ limit: 100 });
-        const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
-        if (Array.isArray(list)) {
-          const matched = list.find((p: any) =>
-            p.variants?.some((v: any) => v.sku === item.sku) || p.sku === item.sku
-          );
-          if (matched) {
-            targetProdId = matched._id || matched.id;
+        // 1. Direct SKU endpoint lookup
+        const skuRes: any = await (api.products as any).getBySku?.(item.sku).catch(() => null);
+        const skuProd = skuRes?.data?.product || skuRes?.product || skuRes?.data || skuRes;
+        if (skuProd && (skuProd._id || skuProd.id)) {
+          targetProdId = (skuProd._id || skuProd.id).toString();
+        }
+
+        // 2. Targeted SKU search if direct lookup returned nothing
+        if (!targetProdId || !/^[0-9a-fA-F]{24}$/.test(targetProdId)) {
+          const res: any = await api.products.list({ search: item.sku, q: item.sku, limit: 20 });
+          const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
+          if (Array.isArray(list)) {
+            const matched = list.find((p: any) =>
+              p.variants?.some((v: any) => v.sku === item.sku) || p.sku === item.sku || p._id === item.sku
+            );
+            if (matched) {
+              targetProdId = (matched._id || matched.id).toString();
+            }
+          }
+        }
+
+        // 3. Fallback catalog list scan
+        if (!targetProdId || !/^[0-9a-fA-F]{24}$/.test(targetProdId)) {
+          const res: any = await api.products.list({ limit: 100 });
+          const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
+          if (Array.isArray(list)) {
+            const matched = list.find((p: any) =>
+              p.variants?.some((v: any) => v.sku === item.sku) || p.sku === item.sku
+            );
+            if (matched) {
+              targetProdId = (matched._id || matched.id).toString();
+            }
           }
         }
       } catch (err) {
@@ -158,6 +182,7 @@ export default function OrderDetailPage() {
       id: targetProdId,
       name: item.name,
       image: item.primaryImage || item.image,
+      sku: item.sku,
     });
   };
 
@@ -215,9 +240,14 @@ export default function OrderDetailPage() {
         <div className="space-y-4">
           {order.items?.map((item: any, idx: number) => {
             const img = item.primaryImage || item.image;
-            const itemProdId = item.productId?._id || item.productId || item._id;
+            const itemProdId = typeof item.productId === 'string'
+              ? item.productId
+              : item.productId?._id?.toString() || item.productId?.id?.toString() || item._id;
             const isDelivered = statusKey === 'delivered';
-            const isReviewed = itemProdId && reviewedProductIds[itemProdId];
+            const isReviewed = Boolean(
+              (itemProdId && reviewedProductIds[itemProdId]) ||
+              (item.sku && reviewedProductIds[item.sku])
+            );
 
             return (
               <div key={idx} className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 p-3 bg-gray-50/50 rounded-xl border border-border">
@@ -357,7 +387,13 @@ export default function OrderDetailPage() {
           productName={reviewItem.name}
           productImage={reviewItem.image}
           onSuccess={() => {
-            setReviewedProductIds((prev) => ({ ...prev, [reviewItem.id]: true }));
+            if (reviewItem) {
+              setReviewedProductIds((prev) => ({
+                ...prev,
+                [reviewItem.id]: true,
+                ...(reviewItem.sku ? { [reviewItem.sku]: true } : {}),
+              }));
+            }
           }}
         />
       )}

@@ -122,6 +122,7 @@ export const api = {
     list: (params?: Record<string, any>) =>
       apiClient.get('/products', { params }),
     getBySlug: (slug: string) => apiClient.get(`/products/${slug}`),
+    getBySku: (sku: string) => apiClient.get(`/products/sku/${sku}`),
     getRelated: (id: string) => apiClient.get(`/products/${id}/related`),
   },
 

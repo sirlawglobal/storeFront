@@ -37,7 +37,12 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
     setSuccessMsg('');
 
     try {
-      await api.reviews.submit(productId, { rating, title, comment });
+      await api.reviews.submit(productId, {
+        rating,
+        title: title.trim() || 'Verified Purchase Review',
+        comment,
+        body: comment,
+      } as any);
       setSuccessMsg('Thank you! Your verified purchase review has been submitted for moderation.');
       setTimeout(() => {
         if (onSuccess) onSuccess();
