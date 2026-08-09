@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { X, User, Heart, Settings, LogOut, ChevronRight, Search } from 'lucide-react';
+import { X, User, Heart, Settings, LogOut, ChevronRight, Search, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { Button } from '../ui/Button';
 import { api } from '@/lib/api';
@@ -180,6 +180,15 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
                       className="flex items-center gap-3 p-3 rounded-md hover:bg-gray-50 text-text-primary"
                     >
                       <Heart size={18} className="text-text-secondary" /> Wishlist
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/account/warranty"
+                      onClick={onClose}
+                      className="flex items-center gap-3 p-3 rounded-md hover:bg-gray-50 text-text-primary"
+                    >
+                      <ShieldCheck size={18} className="text-text-secondary" /> Warranty Center
                     </Link>
                   </li>
                   <li>
