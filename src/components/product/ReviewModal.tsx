@@ -40,7 +40,6 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
       await api.reviews.submit(productId, {
         rating,
         title: title.trim() || 'Verified Purchase Review',
-        comment,
         body: comment,
       } as any);
       setSuccessMsg('Thank you! Your verified purchase review has been submitted for moderation.');
@@ -128,6 +127,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
               <label className="block text-xs font-semibold text-text-primary mb-1">Your Detailed Review</label>
               <textarea
                 required
+                maxLength={1000}
                 rows={4}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
