@@ -146,7 +146,7 @@ export default function ProductDetailPage() {
             <div className="flex items-center gap-4 mb-6">
               <div className="flex items-center gap-1 text-sm">
                 <Star size={16} className="fill-accent text-accent" />
-                <span className="font-medium">{product.averageRating?.toFixed(1) || '0.0'}</span>
+                <span className="font-medium">{((product.averageRating ?? (product as any).rating) || 0).toFixed(1)}</span>
                 <a href="#reviews" className="text-primary hover:underline">({product.reviewCount || 0} reviews)</a>
               </div>
               <span className="text-text-secondary text-sm px-3 py-1 bg-gray-100 rounded-full">

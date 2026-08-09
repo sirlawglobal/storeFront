@@ -38,7 +38,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
     setIsLoading(true);
     try {
       const res: any = await api.reviews.getByProduct(productId);
-      const list = res?.data?.items ?? res?.data ?? res;
+      const list = res?.data?.data ?? res?.data?.items ?? res?.data ?? res;
       setReviews(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error('Failed to load reviews:', err);
