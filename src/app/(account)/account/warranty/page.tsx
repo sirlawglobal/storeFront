@@ -67,7 +67,7 @@ export default function WarrantyPage() {
         const formData = new FormData();
         formData.append('file', receiptFile);
         const uploadRes: any = await api.storage.upload(formData);
-        receiptUrl = uploadRes?.url;
+        receiptUrl = uploadRes?.data?.url ?? uploadRes?.url;
       }
 
       await api.warranty.register({
@@ -102,8 +102,9 @@ export default function WarrantyPage() {
           const formData = new FormData();
           formData.append('file', file);
           const uploadRes: any = await api.storage.upload(formData);
-          if (uploadRes?.url) {
-            uploadedImageUrls.push(uploadRes.url);
+          const url = uploadRes?.data?.url ?? uploadRes?.url;
+          if (url) {
+            uploadedImageUrls.push(url);
           }
         }
       }

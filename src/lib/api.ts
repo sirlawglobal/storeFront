@@ -265,11 +265,6 @@ export const api = {
 
   // ── Storage & Uploads ──────────────────────────────────────────────────
   storage: {
-    upload: (formData: FormData) =>
-      apiClient.post('/storage/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }),
+    upload: (formData: FormData) => apiClient.post('/storage/upload', formData),
   },
 };
