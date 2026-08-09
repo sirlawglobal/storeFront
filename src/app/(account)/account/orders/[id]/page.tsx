@@ -131,23 +131,27 @@ export default function OrderDetailPage() {
       ? item.productId
       : item.productId?._id?.toString() || item.productId?.id?.toString() || (typeof item.productId?.toString === 'function' ? item.productId.toString() : undefined);
 
+    const cleanItemSku = (item.sku || '').trim().toLowerCase();
+
     // If productId is not a valid 24-character hex MongoId string, resolve via SKU from products catalog
     if (!targetProdId || typeof targetProdId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(targetProdId)) {
       try {
         // 1. Direct SKU endpoint lookup
         const skuRes: any = await (api.products as any).getBySku?.(item.sku).catch(() => null);
-        const skuProd = skuRes?.data?.product || skuRes?.product || skuRes?.data || skuRes;
+        const skuProd = skuRes?.data?.product || skuRes?.product || skuRes?.data?.items?.[0] || skuRes?.items?.[0] || skuRes?.data || skuRes;
         if (skuProd && (skuProd._id || skuProd.id)) {
           targetProdId = (skuProd._id || skuProd.id).toString();
         }
 
         // 2. Targeted SKU search if direct lookup returned nothing
         if (!targetProdId || !/^[0-9a-fA-F]{24}$/.test(targetProdId)) {
-          const res: any = await api.products.list({ search: item.sku, q: item.sku, limit: 20 });
+          const res: any = await api.products.list({ search: item.sku, q: item.sku, limit: 50 });
           const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
           if (Array.isArray(list)) {
             const matched = list.find((p: any) =>
-              p.variants?.some((v: any) => v.sku === item.sku) || p.sku === item.sku || p._id === item.sku
+              p.variants?.some((v: any) => (v.sku || '').trim().toLowerCase() === cleanItemSku) ||
+              (p.sku || '').trim().toLowerCase() === cleanItemSku ||
+              p._id === item.sku
             );
             if (matched) {
               targetProdId = (matched._id || matched.id).toString();
@@ -161,7 +165,8 @@ export default function OrderDetailPage() {
           const list = res?.data?.items ?? res?.items ?? res?.data ?? res;
           if (Array.isArray(list)) {
             const matched = list.find((p: any) =>
-              p.variants?.some((v: any) => v.sku === item.sku) || p.sku === item.sku
+              p.variants?.some((v: any) => (v.sku || '').trim().toLowerCase() === cleanItemSku) ||
+              (p.sku || '').trim().toLowerCase() === cleanItemSku
             );
             if (matched) {
               targetProdId = (matched._id || matched.id).toString();
