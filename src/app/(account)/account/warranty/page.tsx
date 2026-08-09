@@ -319,19 +319,44 @@ export default function WarrantyPage() {
                     ? `Valid until ${new Date(w.expiryDate).toLocaleDateString('en-NG')}`
                     : 'Standard Warranty (5 Years)'}
                 </span>
-                {w.claims?.some((c: any) => c.status === 'PENDING') ? (
-                  <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded-md flex items-center gap-1 font-medium border border-amber-200">
-                    <AlertCircle size={14} /> Claim Under Review
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => setClaimingId(w._id)}
-                    className="text-primary font-semibold hover:underline flex items-center gap-1"
-                  >
-                    <FileText size={14} /> File Claim
-                  </button>
-                )}
+                
+                <div className="flex items-center gap-3">
+                  {w.claims?.some((c: any) => c.status === 'PENDING') ? (
+                    <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded-md flex items-center gap-1 font-medium border border-amber-200">
+                      <AlertCircle size={14} /> Claim Under Review
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setClaimingId(w._id)}
+                      className="text-primary font-semibold hover:underline flex items-center gap-1"
+                    >
+                      <FileText size={14} /> File Claim
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {w.claims && w.claims.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-border">
+                  <p className="text-xs font-semibold text-text-secondary mb-2">Claim History</p>
+                  <div className="space-y-1.5">
+                    {w.claims.map((claim: any, idx: number) => (
+                      <div key={claim._id || idx} className="flex justify-between items-center bg-gray-50/50 p-2 rounded-lg text-xs">
+                        <span className="text-text-secondary">
+                          {claim.createdAt ? new Date(claim.createdAt).toLocaleDateString('en-NG') : 'Unknown Date'}
+                        </span>
+                        <span className={`font-medium ${
+                          claim.status === 'PENDING' ? 'text-amber-600' : 
+                          claim.status === 'RESOLVED' || claim.status === 'APPROVED' ? 'text-emerald-600' : 
+                          'text-red-600'
+                        }`}>
+                          {claim.status === 'RESOLVED' ? 'APPROVED' : claim.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
