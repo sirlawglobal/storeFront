@@ -27,12 +27,14 @@ export default function WarrantyPage() {
   const [serialNumber, setSerialNumber] = useState('');
   const [productId, setProductId] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
 
   // Claim Form State
   const [claimDescription, setClaimDescription] = useState('');
+  const [claimImages, setClaimImages] = useState<File[]>([]);
   const [isFilingClaim, setIsFilingClaim] = useState(false);
 
   const fetchWarranties = async () => {
@@ -59,16 +61,27 @@ export default function WarrantyPage() {
     setFormError('');
     setFormSuccess('');
     try {
+      let receiptUrl: string | undefined;
+
+      if (receiptFile) {
+        const formData = new FormData();
+        formData.append('file', receiptFile);
+        const uploadRes: any = await api.storage.upload(formData);
+        receiptUrl = uploadRes?.url;
+      }
+
       await api.warranty.register({
         serialNumber,
         productId,
         purchaseDate,
+        ...(receiptUrl && { receiptUrl }),
       });
       setFormSuccess('Warranty registered successfully!');
       setShowRegisterForm(false);
       setSerialNumber('');
       setProductId('');
       setPurchaseDate('');
+      setReceiptFile(null);
       fetchWarranties();
     } catch (err: any) {
       setFormError(err.message || 'Failed to register warranty');
@@ -82,12 +95,27 @@ export default function WarrantyPage() {
     if (!claimingId) return;
     setIsFilingClaim(true);
     try {
+      const uploadedImageUrls: string[] = [];
+      
+      if (claimImages.length > 0) {
+        for (const file of claimImages) {
+          const formData = new FormData();
+          formData.append('file', file);
+          const uploadRes: any = await api.storage.upload(formData);
+          if (uploadRes?.url) {
+            uploadedImageUrls.push(uploadRes.url);
+          }
+        }
+      }
+
       await api.warranty.fileClaim(claimingId, {
         description: claimDescription,
+        ...(uploadedImageUrls.length > 0 && { images: uploadedImageUrls }),
       });
       alert('Warranty claim filed successfully! Customer service will review your claim.');
       setClaimingId(null);
       setClaimDescription('');
+      setClaimImages([]);
       fetchWarranties();
     } catch (err: any) {
       alert(err.message || 'Failed to file warranty claim');
@@ -162,6 +190,15 @@ export default function WarrantyPage() {
                 className="input-base"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Purchase Receipt (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                className="input-base p-1.5"
+              />
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -194,6 +231,19 @@ export default function WarrantyPage() {
               className="input-base resize-none"
               placeholder="Describe the issue with your product in detail..."
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 text-amber-900">
+              Photos of Defect (Optional)
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => setClaimImages(Array.from(e.target.files || []))}
+              className="input-base p-1.5 bg-white border-amber-200"
+            />
+            <p className="text-xs text-amber-700 mt-1">You can select multiple images to help us assess your claim faster.</p>
           </div>
           <div className="flex gap-3">
             <Button type="button" variant="outline" onClick={() => setClaimingId(null)}>

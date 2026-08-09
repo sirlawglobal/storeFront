@@ -262,4 +262,14 @@ export const api = {
     getResult: (id: string) => apiClient.get(`/sleep-quiz/result/${id}`),
     getMyLatest: () => apiClient.get('/sleep-quiz/my-latest'),
   },
+
+  // ── Storage & Uploads ──────────────────────────────────────────────────
+  storage: {
+    upload: (formData: FormData) =>
+      apiClient.post('/storage/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }),
+  },
 };
