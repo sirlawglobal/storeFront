@@ -319,12 +319,18 @@ export default function WarrantyPage() {
                     ? `Valid until ${new Date(w.expiryDate).toLocaleDateString('en-NG')}`
                     : 'Standard Warranty (5 Years)'}
                 </span>
-                <button
-                  onClick={() => setClaimingId(w._id)}
-                  className="text-primary font-semibold hover:underline flex items-center gap-1"
-                >
-                  <FileText size={14} /> File Claim
-                </button>
+                {w.claims?.some((c: any) => c.status === 'PENDING') ? (
+                  <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded-md flex items-center gap-1 font-medium border border-amber-200">
+                    <AlertCircle size={14} /> Claim Under Review
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setClaimingId(w._id)}
+                    className="text-primary font-semibold hover:underline flex items-center gap-1"
+                  >
+                    <FileText size={14} /> File Claim
+                  </button>
+                )}
               </div>
             </div>
           ))}
