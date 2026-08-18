@@ -14,7 +14,12 @@ export async function middleware(request: NextRequest) {
   if (!pathname.startsWith('/maintenance')) {
     try {
       // Fetch from backend API
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://vitaformapi-tx0e.onrender.com/api/v1';
+      let apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://vitaformapi-tx0e.onrender.com/api/v1';
+      
+      // If apiUrl is a relative path (e.g. '/api/v1'), we must make it absolute for fetch() in Edge runtime
+      if (apiUrl.startsWith('/')) {
+        apiUrl = `${request.nextUrl.origin}${apiUrl}`;
+      }
       
       // Cache the response for 60 seconds so we don't bombard the backend on every page load
       const res = await fetch(`${apiUrl}/admin/settings/maintenance`, {
