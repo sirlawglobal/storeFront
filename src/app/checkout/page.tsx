@@ -2,19 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ShieldCheck, MapPin, CreditCard, Lock, Plus, Tag } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, MapPin, CreditCard, Lock, Plus, Tag, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useCartStore } from '@/store/cart.store';
 import { Button } from '@/components/ui/Button';
 import { formatPrice } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { getGuestId } from '@/lib/utils';
 import { Address } from '@/types';
 
 type PaymentMethod = 'paystack' | 'flutterwave' | 'moniepoint' | 'opay';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { isLoggedIn, _hasHydrated, user } = useAuthStore();
+  const { isLoggedIn, _hasHydrated, user, login } = useAuthStore();
   const { cart, setCart, clearCart } = useCartStore();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -24,6 +25,35 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
   const [error, setError] = useState('');
+
+  // Guest login form state
+  const [guestForm, setGuestForm] = useState({ identifier: '', password: '' });
+  const [guestLoginLoading, setGuestLoginLoading] = useState(false);
+  const [guestLoginError, setGuestLoginError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleGuestLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGuestLoginLoading(true);
+    setGuestLoginError('');
+    try {
+      const res: any = await api.auth.login(guestForm);
+      const payload = res?.data ?? res;
+      const sessionToken = payload?.sessionToken || payload?.token;
+      const rawUser = payload?.user;
+      if (!sessionToken || !rawUser) throw new Error('Invalid response from server');
+      const user = { ...rawUser, _id: rawUser.id || rawUser._id };
+      login(user, sessionToken);
+      // Merge the guest cart items into the new session
+      const guestId = getGuestId();
+      try { await api.cart.mergeGuestCart(guestId); } catch { /* non-fatal */ }
+      // Stay on /checkout — the isLoggedIn state change will re-render the full checkout form
+    } catch (err: any) {
+      setGuestLoginError(err.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setGuestLoginLoading(false);
+    }
+  };
 
   // Coupon State
   const [couponInput, setCouponInput] = useState('');
@@ -86,12 +116,8 @@ export default function CheckoutPage() {
     fetchActiveGateway();
   }, []);
 
-  // Auth guard
-  useEffect(() => {
-    if (_hasHydrated && !isLoggedIn) {
-      router.push('/login?redirect=/checkout');
-    }
-  }, [_hasHydrated, isLoggedIn, router]);
+  // NOTE: We do NOT auto-redirect guests here.
+  // Instead we render a guest prompt below so they see a clear message.
 
   // Load user's saved addresses
   useEffect(() => {
@@ -117,7 +143,113 @@ export default function CheckoutPage() {
     loadAddresses();
   }, [_hasHydrated, isLoggedIn]);
 
-  if (!_hasHydrated || !isLoggedIn || !cart || cart.items.length === 0) return null;
+  // Show an inline login form for guests instead of redirecting
+  if (_hasHydrated && !isLoggedIn) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center px-4 py-12">
+        <div className="bg-white rounded-2xl shadow-sm border border-border w-full max-w-md overflow-hidden">
+          {/* Header */}
+          <div className="bg-primary/5 border-b border-border px-8 py-6 text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
+              <Lock size={22} className="text-primary" />
+            </div>
+            <h1 className="text-2xl font-playfair font-bold text-primary">Sign in to Continue</h1>
+            <p className="text-text-secondary text-sm mt-1">Enter your details to proceed to checkout</p>
+          </div>
+
+          {/* Form */}
+          <div className="px-8 py-7">
+            {guestLoginError && (
+              <div className="bg-red-50 border border-error text-error text-sm p-3 rounded-lg mb-5">
+                {guestLoginError}
+              </div>
+            )}
+
+            <form onSubmit={handleGuestLogin} className="space-y-4">
+              {/* Email / Phone */}
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-1.5">
+                  Email or Phone Number
+                </label>
+                <input
+                  type="text"
+                  name="identifier"
+                  required
+                  autoFocus
+                  value={guestForm.identifier}
+                  onChange={(e) => setGuestForm({ ...guestForm, identifier: e.target.value })}
+                  placeholder="Enter your email or phone"
+                  className="input-base"
+                />
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-sm font-medium text-text-primary">Password</label>
+                  <Link href="/forgot-password" className="text-xs text-primary font-medium hover:underline">
+                    Forgot Password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    required
+                    value={guestForm.password}
+                    onChange={(e) => setGuestForm({ ...guestForm, password: e.target.value })}
+                    placeholder="Enter your password"
+                    className="input-base pr-11"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <Button
+                type="submit"
+                className="w-full h-12 text-base mt-2"
+                isLoading={guestLoginLoading}
+              >
+                Sign In & Continue to Checkout
+              </Button>
+            </form>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 my-6">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-text-secondary font-medium">OR</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            {/* Register */}
+            <Link
+              href="/register?redirect=/checkout"
+              className="w-full flex items-center justify-center gap-2 border border-border text-text-primary font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors text-sm"
+            >
+              Create a New Account
+            </Link>
+
+            {/* Back link */}
+            <div className="mt-5 text-center">
+              <Link href="/cart" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                ← Back to Cart
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!_hasHydrated || !cart || cart.items.length === 0) return null;
 
   const selectedAddress = addresses.find((a) => a._id === selectedAddressId);
 
