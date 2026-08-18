@@ -1,12 +1,14 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 
-export default function RegisterPage() {
+export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '';
   const [formData, setFormData] = useState({ 
     firstName: '', 
     lastName: '', 
@@ -29,7 +31,8 @@ export default function RegisterPage() {
     try {
       await api.auth.register(formData);
       // Pass identifier to OTP page via query param (in a real app, use better state management)
-      router.push(`/verify-otp?identifier=${encodeURIComponent(formData.email)}`);
+      const otpUrl = `/verify-otp?identifier=${encodeURIComponent(formData.email)}${redirectTo ? `&redirect=${encodeURIComponent(redirectTo)}` : ''}`;
+      router.push(otpUrl);
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -112,5 +115,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
   );
 }

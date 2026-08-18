@@ -9,6 +9,7 @@ function VerifyOtpForm() {
   const searchParams = useSearchParams();
   const identifier = searchParams.get('identifier') || '';
   const type = searchParams.get('type') || 'email'; // 'email' or 'phone'
+  const redirect = searchParams.get('redirect') || '';
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -59,7 +60,8 @@ function VerifyOtpForm() {
       } else {
         await api.auth.verifyEmail({ identifier, otp: code });
       }
-      router.push('/login?verified=true');
+      const loginUrl = `/login?verified=true${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`;
+      router.push(loginUrl);
     } catch (err: any) {
       setError(err.message || 'Invalid or expired OTP');
     } finally {

@@ -1,14 +1,16 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { api } from '@/lib/api';
 import { getGuestId } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 
-export default function LoginPage() {
+export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/account';
   const { login } = useAuthStore();
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +51,7 @@ export default function LoginPage() {
         console.error('Failed to merge guest cart', mergeErr);
       }
       
-      router.push('/account');
+      router.push(redirectTo);
     } catch (err: any) {
       setError(err.message || 'Invalid email or password');
     } finally {
@@ -121,5 +123,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
