@@ -103,9 +103,9 @@ export default function SleepQuizPage() {
             for (let i = 0; i < 5; i++) {
               await new Promise((res) => setTimeout(res, 1000));
               try {
-                const polled: any = await api.sleepQuiz.getResult(quizId);
+                const polled: any = await api.sleepQuiz.getResultWithProducts(quizId);
                 const polledData = polled?.data ?? polled;
-                if (polledData?.status === 'completed') {
+                if (polledData?.status?.toUpperCase() === 'COMPLETED') {
                   quizResult = polledData;
                   break;
                 }
@@ -118,36 +118,37 @@ export default function SleepQuizPage() {
           console.warn('Backend sleep quiz submit fallback:', e);
         }
 
-        // 2. Query real matching products directly from MongoDB database
-        const prodRes: any = await api.products.list({ limit: 20 });
-        const prodData = prodRes?.data ?? prodRes;
-        const productsList: Product[] = Array.isArray(prodData?.items)
-          ? prodData.items
-          : Array.isArray(prodData)
-          ? prodData
+        // Direct populated products from backend AI recommendation
+        const directProducts: Product[] = quizResult
+          ? [
+              quizResult.primaryProduct,
+              ...(quizResult.alternatives || []),
+              ...(quizResult.pillows || []),
+              ...(quizResult.accessories || []),
+            ].filter(Boolean)
           : [];
 
-        if (productsList.length > 0) {
-          let matched: Product[] = [];
-
-          // Try matching by exact AI recommended SKUs
-          const targetSkus = new Set<string>();
-          if (quizResult?.bestMattressSku) targetSkus.add(quizResult.bestMattressSku);
-          if (Array.isArray(quizResult?.alternativeSkus)) {
-            quizResult.alternativeSkus.forEach((s: string) => targetSkus.add(s));
-          }
-          if (Array.isArray(quizResult?.pillowSkus)) {
-            quizResult.pillowSkus.forEach((s: string) => targetSkus.add(s));
-          }
-
-          if (targetSkus.size > 0) {
-            matched = productsList.filter(
-              (p) => targetSkus.has(p._id) || p.variants?.some((v) => targetSkus.has(v.sku))
+        if (directProducts.length > 0) {
+          const finalMatched = directProducts.slice(0, 4);
+          setRecommendations(finalMatched);
+          if (typeof window !== 'undefined' && finalMatched.length > 0) {
+            localStorage.setItem(
+              'vita_recommended_product_ids',
+              JSON.stringify(finalMatched.map((p) => p._id))
             );
           }
+        } else {
+          // Fallback: Query matching products directly from catalog
+          const prodRes: any = await api.products.list({ limit: 20 });
+          const prodData = prodRes?.data ?? prodRes;
+          const productsList: Product[] = Array.isArray(prodData?.items)
+            ? prodData.items
+            : Array.isArray(prodData)
+            ? prodData
+            : [];
 
-          // Fallback matching based on user firmness/answers to ensure unique results
-          if (matched.length === 0) {
+          let matched: Product[] = [];
+          if (productsList.length > 0) {
             const desiredFirmness = String(answers.preferredFirmness || '').toLowerCase();
             if (desiredFirmness) {
               matched = productsList.filter((p) =>
@@ -155,25 +156,23 @@ export default function SleepQuizPage() {
                 p.description?.toLowerCase().includes(desiredFirmness)
               );
             }
-          }
 
-          // Guaranteed unique fallback if still empty
-          if (matched.length === 0) {
-            // Hash answers to pick varied products instead of always top 4
-            const hash = Object.values(answers).join('').length;
-            const startIndex = hash % Math.max(1, productsList.length - 4);
-            matched = productsList.slice(startIndex, startIndex + 4);
-          }
+            // Guaranteed unique fallback if still empty
+            if (matched.length === 0) {
+              const hash = Object.values(answers).join('').length;
+              const startIndex = hash % Math.max(1, productsList.length - 4);
+              matched = productsList.slice(startIndex, startIndex + 4);
+            }
 
-          const finalMatched = matched.slice(0, 4);
-          setRecommendations(finalMatched);
+            const finalMatched = matched.slice(0, 4);
+            setRecommendations(finalMatched);
 
-          // Persist recommended product IDs to localStorage so AIRecommendations on Home Page can display them for guests & logged-in users alike
-          if (typeof window !== 'undefined' && finalMatched.length > 0) {
-            localStorage.setItem('vita_recommended_product_ids', JSON.stringify(finalMatched.map((p) => p._id)));
+            if (typeof window !== 'undefined' && finalMatched.length > 0) {
+              localStorage.setItem('vita_recommended_product_ids', JSON.stringify(finalMatched.map((p) => p._id)));
+            }
+          } else {
+            setRecommendations([]);
           }
-        } else {
-          setRecommendations([]);
         }
       } catch (err) {
         console.error('Failed to generate AI recommendations:', err);

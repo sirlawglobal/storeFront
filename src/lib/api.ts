@@ -260,7 +260,15 @@ export const api = {
     getQuestions: () => apiClient.get('/sleep-quiz/questions'),
     submit: (answers: Record<string, any>) => apiClient.post('/sleep-quiz/submit', answers),
     getResult: (id: string) => apiClient.get(`/sleep-quiz/result/${id}`),
+    getResultWithProducts: (id: string) => apiClient.get(`/sleep-quiz/result/${id}/products`),
     getMyLatest: () => apiClient.get('/sleep-quiz/my-latest'),
+  },
+
+  // ── Mattress Finder ───────────────────────────────────────────────────────
+  mattressFinder: {
+    getOptions: () => apiClient.get('/mattress-finder/options'),
+    query: (data: { firmness?: string; size?: string; maxPrice?: number }) =>
+      apiClient.post('/mattress-finder/query', data),
   },
 
   // ── Storage & Uploads ──────────────────────────────────────────────────
