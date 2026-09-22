@@ -31,32 +31,9 @@ interface DealerItem {
 
 const LAGOS_CENTER: [number, number] = [6.5244, 3.3792];
 
-const FALLBACK_DEALERS: DealerItem[] = [
-  {
-    _id: '1',
-    name: 'Vitafoam Comfort Center - Ikeja',
-    address: '131 Awolowo Way, Ikeja, Lagos',
-    contactPhone: '+234 800 000 0001',
-    type: 'Flagship Store',
-    location: { coordinates: [3.3515, 6.6018] },
-  },
-  {
-    _id: '2',
-    name: 'Sleep Gallery VI',
-    address: 'Plot 4, Adetokunbo Ademola Street, Victoria Island, Lagos',
-    contactPhone: '+234 800 000 0002',
-    type: 'Authorized Dealer',
-    location: { coordinates: [3.4239, 6.4281] },
-  },
-  {
-    _id: '3',
-    name: 'Vitafoam Depot Surulere',
-    address: '84 Adeniran Ogunsanya St, Surulere, Lagos',
-    contactPhone: '+234 800 000 0003',
-    type: 'Depot',
-    location: { coordinates: [3.3542, 6.4926] },
-  },
-];
+// Radii to try, in order, until one returns results. The backend caps
+// radius at 200km, so that's the widest search we can request.
+const SEARCH_RADII_KM = [50, 200];
 
 function toMapDealer(d: DealerItem): MapDealer | null {
   if (!d.location?.coordinates) return null;
@@ -73,30 +50,39 @@ function toMapDealer(d: DealerItem): MapDealer | null {
 }
 
 export default function DealersPage() {
-  const [dealers, setDealers] = useState<DealerItem[]>(FALLBACK_DEALERS);
+  const [dealers, setDealers] = useState<DealerItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>(LAGOS_CENTER);
 
   const fetchDealersByLocation = async (lat: number, lng: number) => {
     setIsLoading(true);
-    setLocationStatus('Searching nearby dealers...');
+    setHasSearched(true);
     try {
-      const res: any = await api.dealers.getNearby(lat, lng, 50);
-      const list = res?.data?.data ?? res?.data ?? res;
-      if (Array.isArray(list) && list.length > 0) {
-        setDealers(list);
-        setSelectedId(null);
-        setMapCenter([lat, lng]);
-        setLocationStatus(`Showing ${list.length} dealer${list.length > 1 ? 's' : ''} near your location`);
-      } else {
-        setLocationStatus('No nearby dealers found within 50km. Showing all known dealers.');
+      for (const radius of SEARCH_RADII_KM) {
+        setLocationStatus(`Searching within ${radius}km...`);
+        const res: any = await api.dealers.getNearby(lat, lng, radius);
+        const list = res?.data?.data ?? res?.data ?? res;
+        if (Array.isArray(list) && list.length > 0) {
+          setDealers(list);
+          setSelectedId(null);
+          setMapCenter([lat, lng]);
+          setLocationStatus(
+            `Showing ${list.length} dealer${list.length > 1 ? 's' : ''} within ${radius}km of your location`
+          );
+          return;
+        }
       }
+      setDealers([]);
+      setMapCenter([lat, lng]);
+      setLocationStatus(`No dealers found within ${SEARCH_RADII_KM[SEARCH_RADII_KM.length - 1]}km of your location`);
     } catch (err) {
       console.error('Failed to fetch nearby dealers', err);
-      setLocationStatus('Failed to locate nearby dealers. Showing all known dealers.');
+      setDealers([]);
+      setLocationStatus('Failed to locate nearby dealers. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -117,6 +103,7 @@ export default function DealersPage() {
       (err) => {
         console.error(err);
         setIsLoading(false);
+        setHasSearched(true);
         setLocationStatus('Location access denied or unavailable');
       }
     );
@@ -232,7 +219,16 @@ export default function DealersPage() {
 
               {!isLoading && filteredDealers.length === 0 && (
                 <div className="text-center py-10 text-text-secondary">
-                  <p>No dealers found matching &quot;{searchTerm}&quot;</p>
+                  {searchTerm ? (
+                    <p>No dealers found matching &quot;{searchTerm}&quot;</p>
+                  ) : hasSearched ? (
+                    <p>No dealers found near your location.</p>
+                  ) : (
+                    <>
+                      <MapPin size={32} className="mx-auto text-gray-300 mb-3" />
+                      <p>Click &quot;Use My Location&quot; to find dealers near you.</p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
