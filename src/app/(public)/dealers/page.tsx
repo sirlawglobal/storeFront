@@ -1,68 +1,102 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Search, MapPin, Phone, ExternalLink, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api';
+import type { MapDealer } from '@/components/dealers/DealerMap';
+
+// Leaflet touches `window` at import time, so the map must be client-only.
+const DealerMap = dynamic(() => import('@/components/dealers/DealerMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center bg-gray-100 rounded-xl">
+      <p className="text-text-secondary text-sm">Loading map...</p>
+    </div>
+  ),
+});
 
 interface DealerItem {
   _id: string;
   name: string;
   address: string;
-  phone?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  operatingHours?: string;
   type?: string;
-  city?: string;
-  state?: string;
-  openingHours?: string;
   location?: {
     coordinates: [number, number]; // [lng, lat]
   };
 }
+
+const LAGOS_CENTER: [number, number] = [6.5244, 3.3792];
 
 const FALLBACK_DEALERS: DealerItem[] = [
   {
     _id: '1',
     name: 'Vitafoam Comfort Center - Ikeja',
     address: '131 Awolowo Way, Ikeja, Lagos',
-    phone: '+234 800 000 0001',
+    contactPhone: '+234 800 000 0001',
     type: 'Flagship Store',
+    location: { coordinates: [3.3515, 6.6018] },
   },
   {
     _id: '2',
     name: 'Sleep Gallery VI',
     address: 'Plot 4, Adetokunbo Ademola Street, Victoria Island, Lagos',
-    phone: '+234 800 000 0002',
+    contactPhone: '+234 800 000 0002',
     type: 'Authorized Dealer',
+    location: { coordinates: [3.4239, 6.4281] },
   },
   {
     _id: '3',
     name: 'Vitafoam Depot Surulere',
     address: '84 Adeniran Ogunsanya St, Surulere, Lagos',
-    phone: '+234 800 000 0003',
+    contactPhone: '+234 800 000 0003',
     type: 'Depot',
+    location: { coordinates: [3.3542, 6.4926] },
   },
 ];
+
+function toMapDealer(d: DealerItem): MapDealer | null {
+  if (!d.location?.coordinates) return null;
+  const [lng, lat] = d.location.coordinates;
+  return {
+    id: d._id,
+    name: d.name,
+    address: d.address,
+    phone: d.contactPhone,
+    openingHours: d.operatingHours,
+    lat,
+    lng,
+  };
+}
 
 export default function DealersPage() {
   const [dealers, setDealers] = useState<DealerItem[]>(FALLBACK_DEALERS);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number]>(LAGOS_CENTER);
 
   const fetchDealersByLocation = async (lat: number, lng: number) => {
     setIsLoading(true);
     setLocationStatus('Searching nearby dealers...');
     try {
       const res: any = await api.dealers.getNearby(lat, lng, 50);
-      const list = res?.data ?? res;
+      const list = res?.data?.data ?? res?.data ?? res;
       if (Array.isArray(list) && list.length > 0) {
         setDealers(list);
-        setLocationStatus('Showing dealers near your location');
+        setSelectedId(null);
+        setMapCenter([lat, lng]);
+        setLocationStatus(`Showing ${list.length} dealer${list.length > 1 ? 's' : ''} near your location`);
       } else {
-        setLocationStatus('No nearby dealers found in 50km radius');
+        setLocationStatus('No nearby dealers found within 50km. Showing all known dealers.');
       }
     } catch (err) {
       console.error('Failed to fetch nearby dealers', err);
-      setLocationStatus('Failed to locate nearby dealers');
+      setLocationStatus('Failed to locate nearby dealers. Showing all known dealers.');
     } finally {
       setIsLoading(false);
     }
@@ -70,10 +104,11 @@ export default function DealersPage() {
 
   const handleUseLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
+      setLocationStatus('Geolocation is not supported by your browser');
       return;
     }
 
+    setIsLoading(true);
     setLocationStatus('Getting your location...');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -81,6 +116,7 @@ export default function DealersPage() {
       },
       (err) => {
         console.error(err);
+        setIsLoading(false);
         setLocationStatus('Location access denied or unavailable');
       }
     );
@@ -91,6 +127,20 @@ export default function DealersPage() {
       d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const mapDealers = useMemo(
+    () => filteredDealers.map(toMapDealer).filter((d): d is MapDealer => d !== null),
+    [filteredDealers]
+  );
+
+  const selectedMapDealer = mapDealers.find((d) => d.id === selectedId) ?? null;
+
+  const handleSelectDealer = (dealer: DealerItem | MapDealer) => {
+    const id = '_id' in dealer ? dealer._id : dealer.id;
+    setSelectedId(id);
+    const md = mapDealers.find((d) => d.id === id);
+    if (md) setMapCenter([md.lat, md.lng]);
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen py-12">
@@ -135,7 +185,12 @@ export default function DealersPage() {
                 filteredDealers.map((dealer) => (
                   <div
                     key={dealer._id}
-                    className="border border-border rounded-xl p-5 hover:border-primary transition-colors cursor-pointer group"
+                    onClick={() => handleSelectDealer(dealer)}
+                    className={`border rounded-xl p-5 transition-colors cursor-pointer group ${
+                      selectedId === dealer._id
+                        ? 'border-primary ring-1 ring-primary bg-primary/5'
+                        : 'border-border hover:border-primary'
+                    }`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-bold text-text-primary group-hover:text-primary transition-colors">
@@ -151,20 +206,21 @@ export default function DealersPage() {
                       <MapPin size={16} className="shrink-0 mt-0.5 text-primary" />
                       <span>{dealer.address}</span>
                     </div>
-                    {dealer.phone && (
+                    {dealer.contactPhone && (
                       <div className="flex items-center gap-2 text-text-secondary text-sm">
                         <Phone size={16} className="shrink-0 text-primary" />
-                        <span>{dealer.phone}</span>
+                        <span>{dealer.contactPhone}</span>
                       </div>
                     )}
                     <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
                       <span className="text-sm font-medium text-success">
-                        {dealer.openingHours || 'Open Today: 9am - 6pm'}
+                        {dealer.operatingHours || 'Open Today: 9am - 6pm'}
                       </span>
                       <a
                         href={`https://maps.google.com/?q=${encodeURIComponent(dealer.address)}`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="text-primary text-sm font-semibold flex items-center gap-1 hover:underline"
                       >
                         Get Directions <ExternalLink size={14} />
@@ -183,15 +239,15 @@ export default function DealersPage() {
           </div>
 
           {/* Map Section */}
-          <div className="w-full md:w-1/2 bg-gray-200 rounded-xl flex items-center justify-center relative overflow-hidden h-[400px] md:h-auto border border-border">
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&q=80')] opacity-50 bg-cover bg-center grayscale" />
-            <div className="relative z-10 bg-white/90 backdrop-blur p-6 rounded-xl text-center shadow-lg max-w-[80%]">
-              <MapPin size={40} className="mx-auto text-primary mb-3" />
-              <h3 className="font-bold text-lg mb-2">Find Nearby Stores</h3>
-              <p className="text-sm text-text-secondary mb-4">
-                Use your device GPS to locate the nearest Vitafoam experience center automatically.
-              </p>
-              <Button size="sm" onClick={handleUseLocation} isLoading={isLoading}>
+          <div className="w-full md:w-1/2 h-[400px] md:h-auto rounded-xl overflow-hidden border border-border relative">
+            <DealerMap
+              dealers={mapDealers}
+              selectedDealer={selectedMapDealer}
+              onSelectDealer={handleSelectDealer}
+              center={mapCenter}
+            />
+            <div className="absolute bottom-3 left-3 right-3 z-[1000] flex justify-center pointer-events-none">
+              <Button size="sm" onClick={handleUseLocation} isLoading={isLoading} className="pointer-events-auto shadow-lg">
                 Use My Location
               </Button>
             </div>
