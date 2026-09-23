@@ -220,8 +220,10 @@ export const api = {
 
   // ── Dealers Locator ───────────────────────────────────────────────────────
   dealers: {
+    getAll: () => apiClient.get('/dealers'),
     getNearby: (lat: number, lng: number, radius = 20) =>
       apiClient.get('/dealers/nearby', { params: { lat, lng, radius } }),
+    search: (location: string) => apiClient.get('/dealers/search', { params: { location } }),
   },
 
   // ── Notifications ─────────────────────────────────────────────────────────

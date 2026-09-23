@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Search, MapPin, Phone, ExternalLink, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -20,10 +20,11 @@ interface DealerItem {
   _id: string;
   name: string;
   address: string;
+  city?: string;
+  state?: string;
   contactPhone?: string;
   contactEmail?: string;
   operatingHours?: string;
-  type?: string;
   location?: {
     coordinates: [number, number]; // [lng, lat]
   };
@@ -31,9 +32,11 @@ interface DealerItem {
 
 const LAGOS_CENTER: [number, number] = [6.5244, 3.3792];
 
-// Radii to try, in order, until one returns results. The backend caps
-// radius at 200km, so that's the widest search we can request.
+// GPS search radii to try, in order, until one returns results. The backend
+// caps radius at 200km, so that's the widest search we can request.
 const SEARCH_RADII_KM = [50, 200];
+
+const SEARCH_DEBOUNCE_MS = 400;
 
 function toMapDealer(d: DealerItem): MapDealer | null {
   if (!d.location?.coordinates) return null;
@@ -49,24 +52,90 @@ function toMapDealer(d: DealerItem): MapDealer | null {
   };
 }
 
+function unwrapDealers(res: any): DealerItem[] {
+  const list = res?.data?.data ?? res?.data ?? res;
+  return Array.isArray(list) ? list : [];
+}
+
 export default function DealersPage() {
   const [dealers, setDealers] = useState<DealerItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [locationStatus, setLocationStatus] = useState('');
-  const [hasSearched, setHasSearched] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>(LAGOS_CENTER);
+  const allDealersRef = useRef<DealerItem[]>([]);
+
+  // Initial load: every onboarded dealer, regardless of the visitor's location.
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      try {
+        const res: any = await api.dealers.getAll();
+        const list = unwrapDealers(res);
+        allDealersRef.current = list;
+        setDealers(list);
+        setLocationStatus(
+          list.length > 0 ? `Showing all ${list.length} dealer${list.length > 1 ? 's' : ''}` : 'No dealers available yet.'
+        );
+      } catch (err) {
+        console.error('Failed to load dealers', err);
+        setLocationStatus('Failed to load dealers. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
+
+  // Search by city/state text, debounced. Hits the backend so it can find
+  // dealers anywhere — not just the ones already loaded on this page — e.g.
+  // searching "Enugu" while browsing from Lagos.
+  useEffect(() => {
+    const term = searchTerm.trim();
+    if (term.length === 0) {
+      setDealers(allDealersRef.current);
+      setSelectedId(null);
+      if (allDealersRef.current.length > 0) {
+        setLocationStatus(
+          `Showing all ${allDealersRef.current.length} dealer${allDealersRef.current.length > 1 ? 's' : ''}`
+        );
+      }
+      return;
+    }
+    if (term.length < 2) return;
+
+    const timer = setTimeout(async () => {
+      setIsLoading(true);
+      setLocationStatus(`Searching dealers in "${term}"...`);
+      try {
+        const res: any = await api.dealers.search(term);
+        const list = unwrapDealers(res);
+        setDealers(list);
+        setSelectedId(null);
+        setLocationStatus(
+          list.length > 0
+            ? `Found ${list.length} dealer${list.length > 1 ? 's' : ''} in "${term}"`
+            : `No dealers found in "${term}"`
+        );
+      } catch (err) {
+        console.error('Dealer search failed', err);
+        setLocationStatus('Search failed. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchDealersByLocation = async (lat: number, lng: number) => {
     setIsLoading(true);
-    setHasSearched(true);
     try {
       for (const radius of SEARCH_RADII_KM) {
         setLocationStatus(`Searching within ${radius}km...`);
         const res: any = await api.dealers.getNearby(lat, lng, radius);
-        const list = res?.data?.data ?? res?.data ?? res;
-        if (Array.isArray(list) && list.length > 0) {
+        const list = unwrapDealers(res);
+        if (list.length > 0) {
           setDealers(list);
           setSelectedId(null);
           setMapCenter([lat, lng]);
@@ -94,6 +163,7 @@ export default function DealersPage() {
       return;
     }
 
+    setSearchTerm('');
     setIsLoading(true);
     setLocationStatus('Getting your location...');
     navigator.geolocation.getCurrentPosition(
@@ -103,21 +173,14 @@ export default function DealersPage() {
       (err) => {
         console.error(err);
         setIsLoading(false);
-        setHasSearched(true);
         setLocationStatus('Location access denied or unavailable');
       }
     );
   };
 
-  const filteredDealers = dealers.filter(
-    (d) =>
-      d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.address.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const mapDealers = useMemo(
-    () => filteredDealers.map(toMapDealer).filter((d): d is MapDealer => d !== null),
-    [filteredDealers]
+    () => dealers.map(toMapDealer).filter((d): d is MapDealer => d !== null),
+    [dealers]
   );
 
   const selectedMapDealer = mapDealers.find((d) => d.id === selectedId) ?? null;
@@ -147,7 +210,7 @@ export default function DealersPage() {
             <div className="relative mb-4">
               <input
                 type="text"
-                placeholder="Search by city, area or store name..."
+                placeholder="Search any city or state (e.g. Enugu, Lagos)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none"
@@ -169,7 +232,7 @@ export default function DealersPage() {
                   ))}
                 </div>
               ) : (
-                filteredDealers.map((dealer) => (
+                dealers.map((dealer) => (
                   <div
                     key={dealer._id}
                     onClick={() => handleSelectDealer(dealer)}
@@ -183,9 +246,9 @@ export default function DealersPage() {
                       <h3 className="font-bold text-text-primary group-hover:text-primary transition-colors">
                         {dealer.name}
                       </h3>
-                      {dealer.type && (
+                      {dealer.state && (
                         <span className="text-xs font-semibold bg-gray-100 text-text-secondary px-2 py-1 rounded">
-                          {dealer.type}
+                          {dealer.state}
                         </span>
                       )}
                     </div>
@@ -217,16 +280,14 @@ export default function DealersPage() {
                 ))
               )}
 
-              {!isLoading && filteredDealers.length === 0 && (
+              {!isLoading && dealers.length === 0 && (
                 <div className="text-center py-10 text-text-secondary">
                   {searchTerm ? (
-                    <p>No dealers found matching &quot;{searchTerm}&quot;</p>
-                  ) : hasSearched ? (
-                    <p>No dealers found near your location.</p>
+                    <p>No dealers found in &quot;{searchTerm}&quot;</p>
                   ) : (
                     <>
                       <MapPin size={32} className="mx-auto text-gray-300 mb-3" />
-                      <p>Click &quot;Use My Location&quot; to find dealers near you.</p>
+                      <p>No dealers found.</p>
                     </>
                   )}
                 </div>
